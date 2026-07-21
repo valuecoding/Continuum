@@ -987,21 +987,30 @@ main {
   opacity: 0;
 }
 
-.edge-label {
+.edge-tag {
+  opacity: 0.4;
+  transition: opacity 280ms ease;
+  pointer-events: none;
+}
+
+.edge-tag rect {
+  fill: #f7fbf9;
+  stroke: rgba(15, 118, 110, 0.22);
+  stroke-width: 1;
+}
+
+.edge-tag text {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.06em;
-  fill: #64748b;
-  opacity: 0.35;
-  transition: opacity 280ms ease;
+  fill: #0f766e;
 }
 
-.arch[data-flow="all"] .edge-label,
-.arch[data-flow="state"] .edge-label.flow-state,
-.arch[data-flow="vector"] .edge-label.flow-vector,
-.arch[data-flow="mcp"] .edge-label.flow-mcp {
+.arch[data-flow="all"] .edge-tag,
+.arch[data-flow="state"] .edge-tag.flow-state,
+.arch[data-flow="vector"] .edge-tag.flow-vector,
+.arch[data-flow="mcp"] .edge-tag.flow-mcp {
   opacity: 1;
-  fill: #0f766e;
 }
 
 .crdb-cell {
