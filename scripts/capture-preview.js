@@ -34,6 +34,7 @@ try {
   });
 
   await page.goto(url, { waitUntil: "networkidle" });
+  await page.waitForSelector("#btn-crash:not([disabled])", { timeout: 60_000 });
   await page.waitForTimeout(400);
   await page.screenshot({
     path: path.join(outputDirectory, "landing.png"),

@@ -1,0 +1,24 @@
+name = "continuum"
+account_id = "8b310e2de4078dbeb92db6c1885e8d44"
+main = "src/cf-worker.js"
+compatibility_date = "2026-07-21"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+# Run Worker first so HTTP→HTTPS redirect + HSTS apply to the whole site
+run_worker_first = true
+
+[[routes]]
+pattern = "continuum.vortex-digital.de"
+custom_domain = true
+
+[vars]
+AWS_REGION = "eu-central-1"
+BEDROCK_EMBEDDING_MODEL = "amazon.titan-embed-text-v2:0"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "64136c3ca62445cd99e6f1db363a9d04"

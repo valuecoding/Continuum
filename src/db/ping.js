@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { closePool, query } from "./client.js";
 
 async function ping() {

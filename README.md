@@ -6,6 +6,19 @@ Continuum is an agentic application whose durable memory lives in **CockroachDB*
 
 > Built for the CockroachDB × AWS Hackathon — Build with Agentic Memory.
 
+| | |
+| --- | --- |
+| **Live demo** | [https://continuum.vortex-digital.de](https://continuum.vortex-digital.de) |
+| **Video** | [https://youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI) |
+| **Repo** | [github.com/valuecoding/Continuum](https://github.com/valuecoding/Continuum) |
+
+### How judges try it (≈30 seconds)
+
+1. Open the [live demo](https://continuum.vortex-digital.de)
+2. Click **Crash after step 2** — timeline freezes mid-mission; state is in CockroachDB
+3. Click **Resume from memory** — remaining steps finish from durable memory
+4. Optional: scroll to **Architecture** and click nodes / path tabs
+
 ![Continuum landing](docs/images/landing.png)
 
 ## Why Continuum
@@ -65,13 +78,26 @@ npm run demo:kill
 npm run demo:resume
 ```
 
-### Demo UI
+### Demo UI (local)
 
 ```bash
 npm run dev:server
 ```
 
 Open [http://127.0.0.1:8787](http://127.0.0.1:8787)
+
+### Public demo (Cloudflare Workers)
+
+Production UI + API run on Cloudflare Workers with Hyperdrive → CockroachDB:
+
+- URL: [https://continuum.vortex-digital.de](https://continuum.vortex-digital.de)
+- Config: `wrangler.toml`, entry `src/cf-worker.js`
+- Secrets (not in git): `AWS_BEARER_TOKEN_BEDROCK` via `wrangler secret`
+- Hyperdrive query cache is **disabled** for read-after-write crash/resume consistency
+
+```bash
+npx wrangler deploy
+```
 
 ### Preview screenshots
 
@@ -89,18 +115,21 @@ npm.cmd run video:draft
 
 Writes `artifacts/video/Continuum-hackathon-demo.mp4` plus captions. Narration source: `docs/video/narration.json`. Disclose on YouTube that narration is AI-generated.
 
+Public video: [https://youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI)
+
 ## Architecture
 
 ![Architecture](docs/images/architecture.png)
 
 ```text
-Browser demo UI
+Browser demo UI  (Cloudflare Worker + assets)
    │
    ▼
 Agent runtime ──writes──▶ agent_sessions / agent_tasks / agent_events
         │
         └──embeds/recalls──▶ agent_memories (VECTOR)  in CockroachDB (AWS eu-central-1)
                                     ▲
+Hyperdrive (cache disabled) ────────┘
 Cursor / MCP ───────────────────────┘  (cockroachlabs.cloud/mcp)
 Amazon Bedrock Titan Embeddings V2 ──▶ same VECTOR column
 ```
@@ -114,6 +143,8 @@ src/memory/               Embeddings + durable store
 src/agent/runtime.js      Mission runner with crash simulation
 src/demo/crash-resume.js  CLI jury proof
 src/server.js             Local demo UI
+src/cf-worker.js          Cloudflare Workers entry (Hyperdrive)
+wrangler.toml             Workers + custom domain + Hyperdrive
 public/                   Premium demo UI
 docs/images/              README screenshots
 .cursor/mcp.json.example  CockroachDB Cloud MCP template (copy to mcp.json locally)

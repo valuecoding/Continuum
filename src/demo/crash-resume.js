@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { closePool } from "../db/client.js";
 import {
   listTasks,
