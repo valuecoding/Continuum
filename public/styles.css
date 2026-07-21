@@ -385,7 +385,7 @@ main {
 
 .hero-visual[data-phase="crashed"] .ribbon-path {
   animation: none;
-  stroke-dashoffset: 280;
+  stroke-dashoffset: 0;
 }
 
 .hero-visual[data-phase="crashed"] .pulse.p2 {
@@ -394,6 +394,7 @@ main {
 }
 
 .hero-visual[data-phase="completed"] .ribbon-path {
+  animation: none;
   stroke-dashoffset: 0;
   filter: drop-shadow(0 0 22px rgba(15, 118, 110, 0.35));
 }
@@ -414,6 +415,15 @@ main {
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.88);
   color: #ecfdf5;
+  opacity: 0;
+  animation: ribbon-fade-in 0.45s ease forwards 1.35s;
+}
+
+.hero-visual[data-phase="crashed"] .phase-chip,
+.hero-visual[data-phase="completed"] .phase-chip,
+.hero-visual[data-phase="running"] .phase-chip {
+  opacity: 1;
+  animation: none;
 }
 
 .hero-visual[data-phase="crashed"] .phase-chip {
@@ -432,9 +442,14 @@ main {
 }
 
 .ribbon-path {
-  stroke-dasharray: 900;
-  stroke-dashoffset: 900;
-  animation: draw 2.4s ease forwards 0.2s;
+  stroke-dasharray: 920;
+  stroke-dashoffset: 920;
+  animation: draw 1.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.ribbon-marks {
+  opacity: 0;
+  animation: ribbon-fade-in 0.5s ease forwards 1.15s;
 }
 
 .annot {
@@ -446,20 +461,29 @@ main {
 
 .pulse {
   transform-origin: center;
-  animation: pulse 2.8s ease-in-out infinite;
+  animation: pulse 2.8s ease-in-out 1.65s infinite;
 }
 
 .pulse.p2 {
-  animation-delay: 0.4s;
+  animation-delay: 1.85s;
 }
 
 .pulse.p3 {
-  animation-delay: 0.8s;
+  animation-delay: 2.05s;
 }
 
 @keyframes draw {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ribbon-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
@@ -1103,6 +1127,8 @@ main {
 
 @media (prefers-reduced-motion: reduce) {
   .ribbon-path,
+  .ribbon-marks,
+  .phase-chip,
   .pulse,
   .timeline li,
   .recall li,
@@ -1116,6 +1142,11 @@ main {
 
   .ribbon-path {
     stroke-dashoffset: 0;
+  }
+
+  .ribbon-marks,
+  .phase-chip {
+    opacity: 1;
   }
 }
 
