@@ -992,8 +992,15 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .packet animateMotion {
-    display: none;
+  .pulse,
+  .timeline li,
+  .recall li,
+  .btn,
+  .flow-pulse,
+  .fx-layer,
+  .phase-banner[data-phase="crashed"] .phase-dot {
+    animation: none !important;
+    transition: none !important;
   }
 }
 
