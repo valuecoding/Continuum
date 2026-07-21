@@ -1,0 +1,13 @@
+.env
+.env.local
+.env.*.local
+node_modules/
+dist/
+artifacts/
+.tmp_clip_analysis/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.local/
+*.log

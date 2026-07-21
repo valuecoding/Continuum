@@ -1,0 +1,28 @@
+{
+  "name": "continuum",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Crash-proof agentic memory on CockroachDB + AWS Bedrock",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "db:migrate": "node src/db/migrate.js",
+    "db:ping": "node src/db/ping.js",
+    "demo": "node src/demo/crash-resume.js",
+    "demo:kill": "node src/demo/crash-resume.js --crash-midway",
+    "demo:resume": "node src/demo/crash-resume.js --resume",
+    "test:bedrock": "node src/demo/test-bedrock.js",
+    "video:draft": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-demo-video.ps1",
+    "video:audio": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-video-audio.ps1",
+    "agent": "node src/agent/cli.js",
+    "dev:server": "node src/server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.848.0",
+    "dotenv": "^16.6.1",
+    "pg": "^8.16.3",
+    "playwright-core": "^1.61.1"
+  }
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "hero",
+    "text": "Continuum. Agents that remember after they die. When a process crashes mid-mission, most agents forget everything. Continuum does not."
+  },
+  {
+    "id": "problem",
+    "text": "Production agents write constantly, spawn autonomously, and fail. If memory lives only in RAM, the workflow dies with the process."
+  },
+  {
+    "id": "architecture",
+    "text": "Continuum stores the mission cursor, event log, and semantic embeddings in CockroachDB on AWS. Amazon Bedrock Titan creates the vectors. Cursor connects through the CockroachDB Cloud MCP server."
+  },
+  {
+    "id": "crash",
+    "text": "Watch the jury proof. We start a real mission, then simulate a crash after step two. Steps three and four stay pending in CockroachDB."
+  },
+  {
+    "id": "memory",
+    "text": "The timeline is not a mock. It is durable task state. Semantic recall pulls related memories from the same database using distributed vector search."
+  },
+  {
+    "id": "resume",
+    "text": "Now we resume. Continuum reads the unfinished cursor and continues from the next pending step. No human re-briefing. No lost context."
+  },
+  {
+    "id": "completed",
+    "text": "The mission completes. Closing memories are written back with Bedrock embeddings, still queryable beside the transactional state."
+  },
+  {
+    "id": "closing",
+    "text": "Continuum. CockroachDB for agentic memory. Bedrock for embeddings. Built so agents survive failure. Memory is the product."
+  }
+]
