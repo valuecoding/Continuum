@@ -193,17 +193,34 @@
         <div class="section-head">
           <h2>Architecture</h2>
           <p>
-            Follow a live request through runtime → CockroachDB → Bedrock. Click a
-            node to highlight its path.
+            The diagram walks itself through the jury path. Pause anytime by
+            picking a focus — click a node or tab to pin it.
           </p>
         </div>
 
         <div class="arch-shell">
-          <div class="arch-controls" role="tablist" aria-label="Architecture focus">
-            <button type="button" class="arch-tab is-on" data-flow="all">Full path</button>
-            <button type="button" class="arch-tab" data-flow="state">Task state</button>
-            <button type="button" class="arch-tab" data-flow="vector">Vectors</button>
-            <button type="button" class="arch-tab" data-flow="mcp">MCP inspect</button>
+          <div class="arch-tourbar">
+            <div class="arch-controls" role="tablist" aria-label="Architecture focus">
+              <button type="button" class="arch-tab is-on" data-flow="all">Full path</button>
+              <button type="button" class="arch-tab" data-flow="state">Task state</button>
+              <button type="button" class="arch-tab" data-flow="vector">Vectors</button>
+              <button type="button" class="arch-tab" data-flow="mcp">MCP inspect</button>
+            </div>
+            <button type="button" class="arch-play is-playing" id="arch-play" aria-pressed="true">
+              Auto
+            </button>
+          </div>
+
+          <div class="arch-stage" id="arch-stage" aria-live="polite">
+            <span class="arch-stage-n" id="arch-stage-n">01</span>
+            <div>
+              <strong id="arch-stage-title">Full path</strong>
+              <p id="arch-caption">
+                Continuum writes transactional state and vectors into the same CockroachDB
+                cluster. Bedrock produces embeddings. The managed MCP server lets Cursor
+                inspect the living memory layer.
+              </p>
+            </div>
           </div>
 
           <figure class="arch-figure">
@@ -213,11 +230,12 @@
               id="arch-svg"
               role="img"
               aria-label="Continuum architecture diagram"
+              data-flow="all"
             >
               <defs>
                 <linearGradient id="archFill" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#ecfdf5" />
-                  <stop offset="100%" stop-color="#e0f2fe" />
+                  <stop offset="0%" stop-color="#f4faf8" />
+                  <stop offset="100%" stop-color="#e8f2f0" />
                 </linearGradient>
                 <linearGradient id="flowGrad" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stop-color="#0f766e" stop-opacity="0" />
@@ -238,9 +256,9 @@
 
               <rect x="0" y="0" width="1000" height="460" rx="28" fill="url(#archFill)" />
 
-              <!-- animated flow paths -->
               <g class="flows" fill="none" stroke-linecap="round">
                 <path
+                  id="path-state"
                   class="flow-line flow-state"
                   d="M238 210 H310"
                   stroke="#0f766e"
@@ -248,6 +266,7 @@
                   marker-end="url(#arrow)"
                 />
                 <path
+                  id="path-vector"
                   class="flow-line flow-vector"
                   d="M680 150 C720 150, 720 140, 760 140"
                   stroke="#0e7490"
@@ -255,6 +274,7 @@
                   marker-end="url(#arrow)"
                 />
                 <path
+                  id="path-embed"
                   class="flow-line flow-vector"
                   d="M855 190 V230"
                   stroke="#334155"
@@ -262,6 +282,7 @@
                   marker-end="url(#arrow)"
                 />
                 <path
+                  id="path-mcp"
                   class="flow-line flow-mcp"
                   d="M680 300 C720 300, 720 280, 760 280"
                   stroke="#1e293b"
@@ -286,7 +307,21 @@
                   stroke="url(#flowGrad)"
                   stroke-width="4"
                 />
+
+                <circle class="packet packet-state" r="5" fill="#0f766e">
+                  <animateMotion dur="1.6s" repeatCount="indefinite" path="M238 210 H310" />
+                </circle>
+                <circle class="packet packet-vector" r="5" fill="#0e7490">
+                  <animateMotion dur="1.8s" repeatCount="indefinite" path="M680 150 C720 150, 720 140, 760 140" />
+                </circle>
+                <circle class="packet packet-mcp" r="5" fill="#1e293b">
+                  <animateMotion dur="1.7s" repeatCount="indefinite" path="M680 300 C720 300, 720 280, 760 280" />
+                </circle>
               </g>
+
+              <text class="edge-label flow-state" x="274" y="198" text-anchor="middle">cursor</text>
+              <text class="edge-label flow-vector" x="720" y="128" text-anchor="middle">embed</text>
+              <text class="edge-label flow-mcp" x="720" y="292" text-anchor="middle">inspect</text>
 
               <g class="node arch-node" data-node="runtime" tabindex="0" role="button">
                 <rect x="48" y="150" width="190" height="120" rx="18" fill="#0f172a" />
@@ -318,11 +353,6 @@
                 <text x="855" y="304" text-anchor="middle" fill="#94a3b8" class="arch-sub">Cursor ↔ Cloud</text>
               </g>
             </svg>
-            <figcaption id="arch-caption">
-              Continuum writes transactional state and vectors into the same CockroachDB
-              cluster. Bedrock produces embeddings. The managed MCP server lets Cursor
-              inspect the living memory layer.
-            </figcaption>
           </figure>
         </div>
       </section>

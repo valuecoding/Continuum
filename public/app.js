@@ -18,24 +18,55 @@ const btnResume = document.getElementById("btn-resume");
 const buttons = [...document.querySelectorAll("[data-action]")];
 const archSvg = document.getElementById("arch-svg");
 const archCaption = document.getElementById("arch-caption");
+const archStageTitle = document.getElementById("arch-stage-title");
+const archStageN = document.getElementById("arch-stage-n");
+const archPlay = document.getElementById("arch-play");
+const archSection = document.getElementById("architecture");
 const archTabs = [...document.querySelectorAll(".arch-tab")];
 const archNodes = [...document.querySelectorAll(".arch-node")];
 
+const ARCH_TOUR = [
+  {
+    flow: "all",
+    n: "01",
+    title: "Full path",
+    copy: "Continuum writes transactional state and vectors into the same CockroachDB cluster. Bedrock produces embeddings. MCP lets Cursor inspect the living memory layer.",
+  },
+  {
+    flow: "state",
+    n: "02",
+    title: "Task state",
+    copy: "Agent Runtime marks the mission cursor in sessions, tasks, and events. After a crash, resume reads the last incomplete step_index from CockroachDB.",
+  },
+  {
+    flow: "vector",
+    n: "03",
+    title: "Vectors",
+    copy: "Bedrock Titan Embeddings V2 turns recovery notes into VECTOR(1024). CockroachDB stores and searches them with <-> distance — memory survives process death.",
+  },
+  {
+    flow: "mcp",
+    n: "04",
+    title: "MCP inspect",
+    copy: "Managed MCP bridges Cursor to the CockroachDB Cloud cluster so the jury path is inspectable while the demo runs — no separate ops console required.",
+  },
+];
+
 const ARCH_COPY = {
-  all: "Continuum writes transactional state and vectors into the same CockroachDB cluster. Bedrock produces embeddings. The managed MCP server lets Cursor inspect the living memory layer.",
-  state:
-    "Task cursor path: Agent Runtime marks steps in agent_sessions / agent_tasks / agent_events. After a crash, resume reads the last incomplete step_index.",
-  vector:
-    "Semantic path: Bedrock Titan Embeddings V2 turns notes into VECTOR(1024). CockroachDB stores and searches them with <-> distance.",
-  mcp: "Inspect path: CockroachDB managed MCP lets Cursor query the live memory layer without leaving the IDE.",
-  runtime:
-    "Agent Runtime owns the mission loop — start, simulated crash, and resume — but never keeps the source of truth in process memory.",
+  all: ARCH_TOUR[0].copy,
+  state: ARCH_TOUR[1].copy,
+  vector: ARCH_TOUR[2].copy,
+  mcp: ARCH_TOUR[3].copy,
+  runtime: ARCH_TOUR[1].copy,
   crdb: "CockroachDB is the durable brain: sessions, tasks, events, and VECTOR memories in one transactional store on AWS eu-central-1.",
-  bedrock:
-    "Amazon Bedrock Titan Text Embeddings V2 turns recovery notes into searchable vectors for semantic recall after restart.",
-  mcpNode:
-    "Managed MCP bridges Cursor to the CockroachDB Cloud cluster so the jury path is inspectable while the demo runs.",
+  bedrock: ARCH_TOUR[2].copy,
+  mcpNode: ARCH_TOUR[3].copy,
 };
+
+let archAutoplay = true;
+let archTimer = null;
+let archIndex = 0;
+let archInView = false;
 
 let currentPhase = "ready";
 
@@ -313,20 +344,68 @@ async function call(action) {
   }
 }
 
-function setArchFlow(flow) {
+function setArchFlow(flow, { fromTour = false } = {}) {
   if (!archSvg) return;
   archSvg.dataset.flow = flow;
   for (const tab of archTabs) {
     tab.classList.toggle("is-on", tab.dataset.flow === flow);
   }
-  for (const node of archNodes) node.classList.remove("is-hot");
-  archCaption.textContent = ARCH_COPY[flow] || ARCH_COPY.all;
+
+  const step =
+    ARCH_TOUR.find((s) => s.flow === flow) ||
+    ARCH_TOUR[0];
+  if (!fromTour) {
+    archIndex = Math.max(
+      0,
+      ARCH_TOUR.findIndex((s) => s.flow === flow)
+    );
+  }
+  if (archStageN) archStageN.textContent = step.n;
+  if (archStageTitle) archStageTitle.textContent = step.title;
+  if (archCaption) archCaption.textContent = step.copy;
+
+  const hotMap = {
+    all: null,
+    state: "runtime",
+    vector: "bedrock",
+    mcp: "mcp",
+  };
+  const hotName = hotMap[flow];
+  for (const node of archNodes) {
+    node.classList.toggle(
+      "is-hot",
+      hotName ? node.dataset.node === hotName || node.dataset.node === "crdb" : false
+    );
+  }
+}
+
+function stopArchTour() {
+  if (archTimer) {
+    window.clearInterval(archTimer);
+    archTimer = null;
+  }
+}
+
+function startArchTour() {
+  stopArchTour();
+  if (!archAutoplay || !archInView) return;
+  archTimer = window.setInterval(() => {
+    archIndex = (archIndex + 1) % ARCH_TOUR.length;
+    setArchFlow(ARCH_TOUR[archIndex].flow, { fromTour: true });
+  }, 3200);
+}
+
+function setArchAutoplay(on) {
+  archAutoplay = on;
+  archPlay?.classList.toggle("is-playing", on);
+  archPlay?.setAttribute("aria-pressed", on ? "true" : "false");
+  if (archPlay) archPlay.textContent = on ? "Auto" : "Paused";
+  if (on) startArchTour();
+  else stopArchTour();
 }
 
 function focusArchNode(nodeName) {
-  for (const node of archNodes) {
-    node.classList.toggle("is-hot", node.dataset.node === nodeName);
-  }
+  setArchAutoplay(false);
   const map = {
     runtime: "state",
     crdb: "all",
@@ -335,10 +414,12 @@ function focusArchNode(nodeName) {
   };
   const flow = map[nodeName] || "all";
   setArchFlow(flow);
-  const copyKey = nodeName === "mcp" ? "mcpNode" : nodeName;
-  archCaption.textContent = ARCH_COPY[copyKey] || ARCH_COPY.all;
-  const hot = archNodes.find((n) => n.dataset.node === nodeName);
-  if (hot) hot.classList.add("is-hot");
+  if (nodeName === "crdb" && archCaption) {
+    archCaption.textContent = ARCH_COPY.crdb;
+  }
+  for (const node of archNodes) {
+    node.classList.toggle("is-hot", node.dataset.node === nodeName);
+  }
 }
 
 for (const btn of buttons) {
@@ -346,8 +427,13 @@ for (const btn of buttons) {
 }
 
 for (const tab of archTabs) {
-  tab.addEventListener("click", () => setArchFlow(tab.dataset.flow));
+  tab.addEventListener("click", () => {
+    setArchAutoplay(false);
+    setArchFlow(tab.dataset.flow);
+  });
 }
+
+archPlay?.addEventListener("click", () => setArchAutoplay(!archAutoplay));
 
 for (const node of archNodes) {
   node.addEventListener("click", () => focusArchNode(node.dataset.node));
@@ -359,6 +445,21 @@ for (const node of archNodes) {
   });
 }
 
+if (archSection && "IntersectionObserver" in window) {
+  const io = new IntersectionObserver(
+    (entries) => {
+      archInView = entries.some((e) => e.isIntersecting && e.intersectionRatio > 0.25);
+      if (archInView && archAutoplay) startArchTour();
+      else stopArchTour();
+    },
+    { threshold: [0.25, 0.5] }
+  );
+  io.observe(archSection);
+}
+
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 setArchFlow("all");
+if (reduceMotion) setArchAutoplay(false);
+else setArchAutoplay(true);
 setPhase("ready");
 call("status");

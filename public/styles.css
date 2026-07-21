@@ -832,13 +832,22 @@ main {
   gap: 0.85rem;
 }
 
+.arch-tourbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
 .arch-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
 }
 
-.arch-tab {
+.arch-tab,
+.arch-play {
   appearance: none;
   border: 1px solid rgba(15, 23, 42, 0.14);
   background: rgba(255, 255, 255, 0.4);
@@ -852,7 +861,8 @@ main {
   transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
 }
 
-.arch-tab:hover {
+.arch-tab:hover,
+.arch-play:hover {
   color: var(--ink);
 }
 
@@ -860,6 +870,46 @@ main {
   background: #0f172a;
   border-color: #0f172a;
   color: #ecfdf5;
+}
+
+.arch-play.is-playing {
+  border-color: rgba(15, 118, 110, 0.35);
+  color: var(--teal-deep);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.arch-stage {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  align-items: start;
+  padding: 0.95rem 1.1rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.arch-stage-n {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--teal);
+  padding-top: 0.15rem;
+}
+
+.arch-stage strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2rem;
+}
+
+.arch-stage p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  max-width: 70ch;
 }
 
 .arch-figure {
@@ -876,7 +926,7 @@ main {
 
 .arch-node {
   cursor: pointer;
-  transition: opacity 200ms ease;
+  transition: opacity 280ms ease;
 }
 
 .arch-node:focus {
@@ -888,10 +938,14 @@ main {
   filter: url(#glow);
 }
 
+.arch-node.is-hot {
+  opacity: 1;
+}
+
 .arch[data-flow="state"] .arch-node:not([data-node="runtime"]):not([data-node="crdb"]),
 .arch[data-flow="vector"] .arch-node:not([data-node="crdb"]):not([data-node="bedrock"]),
 .arch[data-flow="mcp"] .arch-node:not([data-node="crdb"]):not([data-node="mcp"]) {
-  opacity: 0.28;
+  opacity: 0.22;
 }
 
 .arch[data-flow="state"] .flow-vector,
@@ -915,12 +969,51 @@ main {
   opacity: 0;
 }
 
+.packet {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arch[data-flow="all"] .packet,
+.arch[data-flow="state"] .packet-state,
+.arch[data-flow="vector"] .packet-vector,
+.arch[data-flow="mcp"] .packet-mcp {
+  opacity: 1;
+}
+
+.arch[data-flow="state"] .packet:not(.packet-state),
+.arch[data-flow="vector"] .packet:not(.packet-vector),
+.arch[data-flow="mcp"] .packet:not(.packet-mcp) {
+  opacity: 0;
+}
+
+.edge-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  fill: #64748b;
+  opacity: 0.35;
+  transition: opacity 280ms ease;
+}
+
+.arch[data-flow="all"] .edge-label,
+.arch[data-flow="state"] .edge-label.flow-state,
+.arch[data-flow="vector"] .edge-label.flow-vector,
+.arch[data-flow="mcp"] .edge-label.flow-mcp {
+  opacity: 1;
+  fill: #0f766e;
+}
+
 .crdb-cell {
   transition: fill 200ms ease;
 }
 
 .arch[data-flow="vector"] .vector-cell {
   fill: #0ea5e9;
+}
+
+.arch[data-flow="state"] .crdb-cell:not(.vector-cell) {
+  fill: #14b8a6;
 }
 
 @keyframes flow-move {
@@ -945,11 +1038,10 @@ main {
   font-size: 12px;
 }
 
-.arch-figure figcaption {
-  margin-top: 0.9rem;
-  color: var(--muted);
-  max-width: 70ch;
-  min-height: 2.8em;
+@media (prefers-reduced-motion: reduce) {
+  .packet animateMotion {
+    display: none;
+  }
 }
 
 .foot {
