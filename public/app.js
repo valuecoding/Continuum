@@ -317,19 +317,11 @@ function applyPayload(data, action) {
   }
 }
 
-function revealProof() {
-  document.getElementById("proof")?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-}
-
 async function call(action) {
   setBusy(true);
   logEl.textContent = `Running ${action}…`;
   if (action === "crash" || action === "resume" || action === "full") {
     setPhase("running", { engageLive: true });
-    revealProof();
   }
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 90_000);
