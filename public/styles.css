@@ -910,31 +910,81 @@ main {
   opacity: 0.22;
 }
 
-.arch[data-flow="state"] .flow-vector,
-.arch[data-flow="state"] .flow-mcp,
-.arch[data-flow="vector"] .flow-state,
-.arch[data-flow="vector"] .flow-mcp,
-.arch[data-flow="mcp"] .flow-state,
-.arch[data-flow="mcp"] .flow-vector {
-  opacity: 0.12;
+.flow-line {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  opacity: 0.2;
+  transition: opacity 200ms ease;
 }
 
-.flow-pulse {
-  stroke-dasharray: 18 180;
-  animation: flow-move 1.8s linear infinite;
-  opacity: 0.85;
+/* Full path: draw in correct order with staggered timing */
+.arch[data-flow="all"] .flow-line.flow-state {
+  animation: flow-draw 0.7s ease forwards;
+  animation-delay: 0.05s;
+}
+.arch[data-flow="all"] .flow-line.flow-embed-req {
+  animation: flow-draw 0.7s ease forwards;
+  animation-delay: 0.85s;
+}
+.arch[data-flow="all"] .flow-line.flow-embed-store {
+  animation: flow-draw 0.75s ease forwards;
+  animation-delay: 1.65s;
+}
+.arch[data-flow="all"] .flow-line.flow-mcp {
+  animation: flow-draw 0.7s ease forwards;
+  animation-delay: 2.5s;
 }
 
-.arch[data-flow="state"] .flow-pulse:not(.flow-state),
-.arch[data-flow="vector"] .flow-pulse:not(.flow-vector),
-.arch[data-flow="mcp"] .flow-pulse:not(.flow-mcp) {
-  opacity: 0;
+/* Focused views: only the matching edges draw */
+.arch[data-flow="state"] .flow-line.flow-state {
+  animation: flow-draw 0.75s ease forwards;
+  animation-delay: 0.05s;
+}
+.arch[data-flow="state"] .flow-line:not(.flow-state) {
+  opacity: 0.08;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.arch[data-flow="vector"] .flow-line.flow-embed-req {
+  animation: flow-draw 0.7s ease forwards;
+  animation-delay: 0.05s;
+}
+.arch[data-flow="vector"] .flow-line.flow-embed-store {
+  animation: flow-draw 0.75s ease forwards;
+  animation-delay: 0.85s;
+}
+.arch[data-flow="vector"] .flow-line:not(.flow-vector) {
+  opacity: 0.08;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.arch[data-flow="mcp"] .flow-line.flow-mcp {
+  animation: flow-draw 0.75s ease forwards;
+  animation-delay: 0.05s;
+}
+.arch[data-flow="mcp"] .flow-line:not(.flow-mcp) {
+  opacity: 0.08;
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+@keyframes flow-draw {
+  from {
+    stroke-dashoffset: 100;
+    opacity: 0.35;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
 }
 
 .edge-tag {
-  opacity: 0.4;
-  transition: opacity 280ms ease;
+  opacity: 0;
   pointer-events: none;
+  transition: opacity 220ms ease;
 }
 
 .edge-tag rect {
@@ -950,11 +1000,37 @@ main {
   fill: #0f766e;
 }
 
-.arch[data-flow="all"] .edge-tag,
+.arch[data-flow="all"] .edge-tag.flow-state {
+  animation: tag-in 0.35s ease forwards;
+  animation-delay: 0.55s;
+}
+.arch[data-flow="all"] .edge-tag.flow-embed-req {
+  animation: tag-in 0.35s ease forwards;
+  animation-delay: 1.35s;
+}
+.arch[data-flow="all"] .edge-tag.flow-embed-store {
+  animation: tag-in 0.35s ease forwards;
+  animation-delay: 2.15s;
+}
+.arch[data-flow="all"] .edge-tag.flow-mcp {
+  animation: tag-in 0.35s ease forwards;
+  animation-delay: 3s;
+}
+
 .arch[data-flow="state"] .edge-tag.flow-state,
 .arch[data-flow="vector"] .edge-tag.flow-vector,
 .arch[data-flow="mcp"] .edge-tag.flow-mcp {
-  opacity: 1;
+  animation: tag-in 0.35s ease forwards;
+  animation-delay: 0.45s;
+}
+
+@keyframes tag-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .crdb-cell {
@@ -967,12 +1043,6 @@ main {
 
 .arch[data-flow="state"] .crdb-cell:not(.vector-cell) {
   fill: #14b8a6;
-}
-
-@keyframes flow-move {
-  to {
-    stroke-dashoffset: -198;
-  }
 }
 
 .arch-title {
@@ -992,15 +1062,17 @@ main {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse,
-  .timeline li,
-  .recall li,
-  .btn,
-  .flow-pulse,
-  .fx-layer,
-  .phase-banner[data-phase="crashed"] .phase-dot {
+  .flow-line,
+  .edge-tag {
     animation: none !important;
-    transition: none !important;
+    stroke-dashoffset: 0 !important;
+    opacity: 1 !important;
+  }
+
+  .arch[data-flow="state"] .flow-line:not(.flow-state),
+  .arch[data-flow="vector"] .flow-line:not(.flow-vector),
+  .arch[data-flow="mcp"] .flow-line:not(.flow-mcp) {
+    opacity: 0.08 !important;
   }
 }
 

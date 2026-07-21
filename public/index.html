@@ -196,8 +196,8 @@
         <div class="section-head">
           <h2>Architecture</h2>
           <p>
-            The diagram walks itself through the jury path. Pause anytime by
-            picking a focus — click a node or tab to pin it.
+            Real data path through Continuum. Pick a focus — or turn Auto on to
+            walk the sequence.
           </p>
         </div>
 
@@ -205,11 +205,11 @@
           <div class="arch-tourbar">
             <div class="arch-controls" role="tablist" aria-label="Architecture focus">
               <button type="button" class="arch-tab is-on" data-flow="all">Full path</button>
-              <button type="button" class="arch-tab" data-flow="state">Task state</button>
-              <button type="button" class="arch-tab" data-flow="vector">Vectors</button>
-              <button type="button" class="arch-tab" data-flow="mcp">MCP inspect</button>
+              <button type="button" class="arch-tab" data-flow="state">1 · Task state</button>
+              <button type="button" class="arch-tab" data-flow="vector">2 · Vectors</button>
+              <button type="button" class="arch-tab" data-flow="mcp">3 · MCP inspect</button>
             </div>
-            <button type="button" class="arch-play is-playing" id="arch-play" aria-pressed="true">
+            <button type="button" class="arch-play" id="arch-play" aria-pressed="false">
               Auto
             </button>
           </div>
@@ -219,9 +219,9 @@
             <div>
               <strong id="arch-stage-title">Full path</strong>
               <p id="arch-caption">
-                Continuum writes transactional state and vectors into the same CockroachDB
-                cluster. Bedrock produces embeddings. The managed MCP server lets Cursor
-                inspect the living memory layer.
+                Runtime writes durable state into CockroachDB, asks Bedrock for
+                embeddings, stores VECTOR memories, then MCP can inspect the live
+                cluster.
               </p>
             </div>
           </div>
@@ -240,13 +240,14 @@
                   <stop offset="0%" stop-color="#f4faf8" />
                   <stop offset="100%" stop-color="#e8f2f0" />
                 </linearGradient>
-                <linearGradient id="flowGrad" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#0f766e" stop-opacity="0" />
-                  <stop offset="50%" stop-color="#0f766e" />
-                  <stop offset="100%" stop-color="#0e7490" stop-opacity="0" />
-                </linearGradient>
-                <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
-                  <path d="M0,0 L8,3 L0,6 Z" fill="#334155" />
+                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                  <path d="M0,0 L9,3 L0,6 Z" fill="#0f766e" />
+                </marker>
+                <marker id="arrow-cyan" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                  <path d="M0,0 L9,3 L0,6 Z" fill="#0e7490" />
+                </marker>
+                <marker id="arrow-ink" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                  <path d="M0,0 L9,3 L0,6 Z" fill="#1e293b" />
                 </marker>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="4" result="b" />
@@ -259,56 +260,43 @@
 
               <rect x="0" y="0" width="1000" height="460" rx="28" fill="url(#archFill)" />
 
-              <g class="flows" fill="none" stroke-linecap="round">
+              <!-- Paths written start→end so dash animation travels with the arrow -->
+              <g class="flows" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <!-- 1. Runtime → CockroachDB (task cursor) -->
                 <path
-                  id="path-state"
                   class="flow-line flow-state"
-                  d="M238 210 H310"
+                  pathLength="100"
+                  d="M238 210 H318"
                   stroke="#0f766e"
-                  stroke-width="2.5"
+                  stroke-width="2.75"
                   marker-end="url(#arrow)"
                 />
+                <!-- 2. CockroachDB → Bedrock (embed request) -->
                 <path
-                  id="path-vector"
-                  class="flow-line flow-vector"
-                  d="M680 150 C720 150, 720 140, 760 140"
+                  class="flow-line flow-vector flow-embed-req"
+                  pathLength="100"
+                  d="M680 140 H758"
                   stroke="#0e7490"
-                  stroke-width="2.5"
-                  marker-end="url(#arrow)"
+                  stroke-width="2.75"
+                  marker-end="url(#arrow-cyan)"
                 />
+                <!-- 3. Bedrock → VECTOR memories (store embedding) -->
                 <path
-                  id="path-embed"
-                  class="flow-line flow-vector"
-                  d="M855 190 V230"
-                  stroke="#334155"
-                  stroke-width="2.5"
-                  marker-end="url(#arrow)"
+                  class="flow-line flow-vector flow-embed-store"
+                  pathLength="100"
+                  d="M760 190 C700 210, 620 270, 565 297"
+                  stroke="#0e7490"
+                  stroke-width="2.75"
+                  marker-end="url(#arrow-cyan)"
                 />
+                <!-- 4. CockroachDB → MCP (inspect) -->
                 <path
-                  id="path-mcp"
                   class="flow-line flow-mcp"
-                  d="M680 300 C720 300, 720 280, 760 280"
+                  pathLength="100"
+                  d="M680 300 H758"
                   stroke="#1e293b"
-                  stroke-width="2.5"
-                  marker-end="url(#arrow)"
-                />
-                <path
-                  class="flow-pulse flow-state"
-                  d="M238 210 H310"
-                  stroke="url(#flowGrad)"
-                  stroke-width="4"
-                />
-                <path
-                  class="flow-pulse flow-vector"
-                  d="M680 150 C720 150, 720 140, 760 140"
-                  stroke="url(#flowGrad)"
-                  stroke-width="4"
-                />
-                <path
-                  class="flow-pulse flow-mcp"
-                  d="M680 300 C720 300, 720 280, 760 280"
-                  stroke="url(#flowGrad)"
-                  stroke-width="4"
+                  stroke-width="2.75"
+                  marker-end="url(#arrow-ink)"
                 />
               </g>
 
@@ -342,18 +330,21 @@
                 <text x="855" y="304" text-anchor="middle" fill="#94a3b8" class="arch-sub">Cursor ↔ Cloud</text>
               </g>
 
-              <!-- Labels last so they sit above lines + packets -->
               <g class="edge-tag flow-state">
                 <rect x="242" y="178" width="64" height="22" rx="11" />
                 <text x="274" y="193" text-anchor="middle">cursor</text>
               </g>
-              <g class="edge-tag flow-vector">
-                <rect x="678" y="108" width="58" height="22" rx="11" />
-                <text x="707" y="123" text-anchor="middle">embed</text>
+              <g class="edge-tag flow-vector flow-embed-req">
+                <rect x="688" y="114" width="58" height="22" rx="11" />
+                <text x="717" y="129" text-anchor="middle">embed</text>
+              </g>
+              <g class="edge-tag flow-vector flow-embed-store">
+                <rect x="620" y="232" width="54" height="22" rx="11" />
+                <text x="647" y="247" text-anchor="middle">store</text>
               </g>
               <g class="edge-tag flow-mcp">
-                <rect x="678" y="248" width="68" height="22" rx="11" />
-                <text x="712" y="263" text-anchor="middle">inspect</text>
+                <rect x="688" y="274" width="68" height="22" rx="11" />
+                <text x="722" y="289" text-anchor="middle">inspect</text>
               </g>
             </svg>
           </figure>

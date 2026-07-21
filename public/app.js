@@ -30,25 +30,25 @@ const ARCH_TOUR = [
     flow: "all",
     n: "01",
     title: "Full path",
-    copy: "Continuum writes transactional state and vectors into the same CockroachDB cluster. Bedrock produces embeddings. MCP lets Cursor inspect the living memory layer.",
+    copy: "Runtime writes durable state into CockroachDB, asks Bedrock for embeddings, stores VECTOR memories, then MCP can inspect the live cluster.",
   },
   {
     flow: "state",
     n: "02",
-    title: "Task state",
-    copy: "Agent Runtime marks the mission cursor in sessions, tasks, and events. After a crash, resume reads the last incomplete step_index from CockroachDB.",
+    title: "1 · Task state",
+    copy: "Agent Runtime → CockroachDB: sessions, tasks, and events. The crash/resume cursor lives here — never only in process RAM.",
   },
   {
     flow: "vector",
     n: "03",
-    title: "Vectors",
-    copy: "Bedrock Titan Embeddings V2 turns recovery notes into VECTOR(1024). CockroachDB stores and searches them with <-> distance — memory survives process death.",
+    title: "2 · Vectors",
+    copy: "CockroachDB → Bedrock (embed request), then Bedrock → VECTOR memories (store). Titan Embeddings V2, searchable with <-> distance.",
   },
   {
     flow: "mcp",
     n: "04",
-    title: "MCP inspect",
-    copy: "Managed MCP bridges Cursor to the CockroachDB Cloud cluster so the jury path is inspectable while the demo runs — no separate ops console required.",
+    title: "3 · MCP inspect",
+    copy: "CockroachDB → MCP: Cursor inspects the live Cloud cluster while the demo runs — no separate ops console.",
   },
 ];
 
@@ -63,7 +63,7 @@ const ARCH_COPY = {
   mcpNode: ARCH_TOUR[3].copy,
 };
 
-let archAutoplay = true;
+let archAutoplay = false;
 let archTimer = null;
 let archIndex = 0;
 let archInView = false;
@@ -353,19 +353,19 @@ async function call(action) {
 
 function setArchFlow(flow, { fromTour = false } = {}) {
   if (!archSvg) return;
+
+  // Retrigger CSS draw animations for the selected path
+  archSvg.dataset.flow = "";
+  void archSvg.getBoundingClientRect();
   archSvg.dataset.flow = flow;
+
   for (const tab of archTabs) {
     tab.classList.toggle("is-on", tab.dataset.flow === flow);
   }
 
-  const step =
-    ARCH_TOUR.find((s) => s.flow === flow) ||
-    ARCH_TOUR[0];
+  const step = ARCH_TOUR.find((s) => s.flow === flow) || ARCH_TOUR[0];
   if (!fromTour) {
-    archIndex = Math.max(
-      0,
-      ARCH_TOUR.findIndex((s) => s.flow === flow)
-    );
+    archIndex = Math.max(0, ARCH_TOUR.findIndex((s) => s.flow === flow));
   }
   if (archStageN) archStageN.textContent = step.n;
   if (archStageTitle) archStageTitle.textContent = step.title;
@@ -381,7 +381,9 @@ function setArchFlow(flow, { fromTour = false } = {}) {
   for (const node of archNodes) {
     node.classList.toggle(
       "is-hot",
-      hotName ? node.dataset.node === hotName || node.dataset.node === "crdb" : false
+      hotName
+        ? node.dataset.node === hotName || node.dataset.node === "crdb"
+        : false
     );
   }
 }
@@ -396,19 +398,24 @@ function stopArchTour() {
 function startArchTour() {
   stopArchTour();
   if (!archAutoplay || !archInView) return;
+  // Full path draw needs ~3.3s; give each step room to finish
   archTimer = window.setInterval(() => {
     archIndex = (archIndex + 1) % ARCH_TOUR.length;
     setArchFlow(ARCH_TOUR[archIndex].flow, { fromTour: true });
-  }, 3200);
+  }, 4200);
 }
 
 function setArchAutoplay(on) {
   archAutoplay = on;
   archPlay?.classList.toggle("is-playing", on);
   archPlay?.setAttribute("aria-pressed", on ? "true" : "false");
-  if (archPlay) archPlay.textContent = on ? "Auto" : "Paused";
-  if (on) startArchTour();
-  else stopArchTour();
+  if (archPlay) archPlay.textContent = on ? "Auto on" : "Auto";
+  if (on) {
+    setArchFlow(ARCH_TOUR[archIndex].flow, { fromTour: true });
+    startArchTour();
+  } else {
+    stopArchTour();
+  }
 }
 
 function focusArchNode(nodeName) {
@@ -455,9 +462,16 @@ for (const node of archNodes) {
 if (archSection && "IntersectionObserver" in window) {
   const io = new IntersectionObserver(
     (entries) => {
-      archInView = entries.some((e) => e.isIntersecting && e.intersectionRatio > 0.25);
+      archInView = entries.some(
+        (e) => e.isIntersecting && e.intersectionRatio > 0.25
+      );
       if (archInView && archAutoplay) startArchTour();
       else stopArchTour();
+      // Play draw once when section first enters view
+      if (archInView && !archSvg?.dataset.seen) {
+        if (archSvg) archSvg.dataset.seen = "1";
+        setArchFlow(archSvg?.dataset.flow || "all");
+      }
     },
     { threshold: [0.25, 0.5] }
   );
@@ -466,7 +480,7 @@ if (archSection && "IntersectionObserver" in window) {
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 setArchFlow("all");
-if (reduceMotion) setArchAutoplay(false);
-else setArchAutoplay(true);
+setArchAutoplay(false);
+if (reduceMotion) stopArchTour();
 setPhase("ready");
 call("status");
