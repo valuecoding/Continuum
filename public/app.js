@@ -133,26 +133,30 @@ function setPhase(phase, { sessionId, engageLive = false } = {}) {
   currentPhase = phase;
   const short = sessionId ? sessionId.slice(0, 8) : null;
 
-  // Hero ribbon stays until the user actually runs crash/resume/full.
   if (engageLive) setLive(true);
   if (phase === "ready" && !engageLive) setLive(false);
 
-  document.body.dataset.phase = phase;
-  if (demoStage) demoStage.dataset.phase = phase;
-  if (heroVisual) heroVisual.dataset.phase = phase;
-  if (phaseChip) phaseChip.textContent = phase;
+  // Hero ribbon / chip stay on landing "ready" until the user actually runs a demo.
+  // Status hydrate still updates proof + buttons from DB without flipping the hero.
+  const heroPhase = engageLive || phase === "ready" ? phase : "ready";
+  document.body.dataset.phase = engageLive ? phase : heroPhase;
+  if (demoStage) demoStage.dataset.phase = engageLive ? phase : heroPhase;
+  if (heroVisual) heroVisual.dataset.phase = heroPhase;
+  if (phaseChip) phaseChip.textContent = heroPhase;
   if (phaseBanner) phaseBanner.dataset.phase = phase;
-  syncDock(phase);
+  syncDock(engageLive ? phase : "ready");
 
   for (const step of journeySteps) {
     const target = step.dataset.phase;
-    step.classList.toggle("is-active", target === phase);
+    const visualPhase = engageLive ? phase : "ready";
+    step.classList.toggle("is-active", target === visualPhase);
     step.classList.toggle(
       "is-done",
-      (phase === "crashed" && target === "ready") ||
-        (phase === "completed" &&
-          (target === "ready" || target === "crashed")) ||
-        (phase === "running" && target === "ready")
+      engageLive &&
+        ((phase === "crashed" && target === "ready") ||
+          (phase === "completed" &&
+            (target === "ready" || target === "crashed")) ||
+          (phase === "running" && target === "ready"))
     );
   }
 
