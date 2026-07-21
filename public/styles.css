@@ -64,101 +64,104 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
-.story-rail {
-  position: sticky;
-  top: 56px;
-  z-index: 25;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  border-bottom: 1px solid transparent;
-  background: rgba(238, 243, 241, 0.92);
-  backdrop-filter: blur(16px);
-  transition:
-    max-height 420ms ease,
-    opacity 280ms ease,
-    border-color 280ms ease,
-    box-shadow 280ms ease;
-}
-
-body.is-live .story-rail {
-  max-height: 120px;
-  opacity: 1;
-  pointer-events: auto;
-  border-bottom-color: var(--line);
-  box-shadow: 0 12px 28px rgba(16, 35, 31, 0.06);
-}
-
-.story-rail-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0.35rem 1.25rem 0.45rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 1rem;
+.mission-dock {
+  display: none;
   align-items: center;
+  gap: 0.85rem;
 }
 
-.rail-path {
-  stroke-dasharray: 700;
-  stroke-dashoffset: 0;
+body.is-live .nav {
+  display: none;
 }
 
-.rail-annot {
-  font-size: 11px;
-}
-
-.rail-meta {
+body.is-live .mission-dock {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 0.25rem;
-  text-align: right;
 }
 
-.rail-chip {
-  position: static;
-  display: inline-flex;
+body.is-live .hero-visual {
+  display: none;
 }
 
-.rail-text {
+.dock-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.dock-step {
+  display: flex;
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: var(--muted);
-  max-width: 28ch;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(16, 35, 31, 0.35);
 }
 
-.story-rail[data-phase="crashed"] .rail-path {
-  stroke: #be123c;
-  stroke-dashoffset: 180;
-  animation: none;
+.dock-step span {
+  padding: 0.35rem 0.55rem;
+  border-radius: 999px;
 }
 
-.story-rail[data-phase="crashed"] .pulse.p2 {
-  fill: #be123c;
-  animation: pulse-crash 0.9s ease-in-out infinite;
+.dock-step:not(:last-child)::after {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: rgba(16, 35, 31, 0.18);
+  margin: 0 0.15rem;
 }
 
-.story-rail[data-phase="completed"] .rail-path {
-  stroke-dashoffset: 0;
-  filter: drop-shadow(0 0 10px rgba(15, 118, 110, 0.35));
+.dock-step.is-done {
+  color: var(--teal-deep);
 }
 
-.story-rail[data-phase="completed"] .pulse.p3 {
-  fill: #0f766e;
+.dock-step.is-done span {
+  background: rgba(15, 118, 110, 0.1);
 }
 
-.story-rail[data-phase="crashed"] .rail-chip {
-  background: #be123c;
+.dock-step.is-active {
+  color: var(--ink);
 }
 
-.story-rail[data-phase="completed"] .rail-chip {
-  background: #0f766e;
+.dock-step.is-active span {
+  background: #0f172a;
+  color: #ecfdf5;
 }
 
-.story-rail[data-phase="running"] .rail-chip {
-  background: #0e7490;
+body[data-phase="crashed"] .dock-step[data-dock="crash"].is-active span {
+  background: var(--danger);
+  color: #fff;
+}
+
+body[data-phase="completed"] .dock-step[data-dock="resume"].is-active span {
+  background: var(--teal);
+  color: #ecfdf5;
+}
+
+.dock-chip {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ecfdf5;
+}
+
+body[data-phase="crashed"] .dock-chip {
+  background: var(--danger);
+}
+
+body[data-phase="completed"] .dock-chip {
+  background: var(--teal);
+}
+
+body[data-phase="running"] .dock-chip {
+  background: var(--amber);
 }
 
 .demo-stage {
@@ -188,7 +191,7 @@ body.is-live .story-rail {
 
 .proof {
   padding: 0.5rem 0 3.5rem;
-  scroll-margin-top: 140px;
+  scroll-margin-top: 72px;
   opacity: 0.72;
   transform: translateY(8px);
   transition: opacity 380ms ease, transform 380ms ease;
@@ -405,10 +408,8 @@ main {
 }
 
 .hero-visual[data-phase="crashed"] .ribbon-path {
-  stroke: #be123c;
   animation: none;
-  stroke-dashoffset: 420;
-  filter: drop-shadow(0 0 18px rgba(190, 18, 60, 0.35));
+  stroke-dashoffset: 280;
 }
 
 .hero-visual[data-phase="crashed"] .pulse.p2 {
@@ -994,18 +995,17 @@ main {
     max-width: none;
   }
 
-  .story-rail-inner {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
+  body.is-live .mission-dock {
+    gap: 0.45rem;
   }
 
-  .rail-meta {
-    align-items: flex-start;
-    text-align: left;
+  .dock-step span {
+    padding: 0.3rem 0.45rem;
+    font-size: 0.66rem;
   }
 
-  .rail-ribbon {
-    width: 100%;
+  .dock-step:not(:last-child)::after {
+    width: 10px;
   }
 
   .stat-row {
@@ -1041,6 +1041,4 @@ main {
     stroke-dashoffset: 0;
   }
 }
-
-/* story-rail sync */
 

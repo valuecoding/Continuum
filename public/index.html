@@ -44,43 +44,20 @@
     <header class="top">
       <div class="top-inner">
         <a class="mark" href="#top">CONTINUUM</a>
-        <nav class="nav">
+        <nav class="nav" id="nav-links">
           <a href="#proof">Proof</a>
           <a href="#architecture">Architecture</a>
         </nav>
-      </div>
-    </header>
-
-    <!-- Sticky story strip — stays visible while live proof updates -->
-    <div id="story-rail" class="story-rail" data-phase="ready" aria-hidden="true">
-      <div class="story-rail-inner">
-        <svg class="rail-ribbon" viewBox="0 0 640 120" fill="none" aria-hidden="true">
-          <path
-            class="ribbon-path rail-path"
-            d="M40 78 C 130 28, 220 108, 320 62 S 470 18, 600 48"
-            stroke="url(#railGrad)"
-            stroke-width="6"
-            stroke-linecap="round"
-          />
-          <defs>
-            <linearGradient id="railGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stop-color="#0f766e" />
-              <stop offset="100%" stop-color="#0e7490" />
-            </linearGradient>
-          </defs>
-          <circle class="pulse p1" cx="118" cy="52" r="7" fill="#0f766e" />
-          <circle class="pulse p2" cx="320" cy="62" r="8" fill="#134e4a" />
-          <circle class="pulse p3" cx="520" cy="38" r="7" fill="#0e7490" />
-          <text x="118" y="100" text-anchor="middle" class="annot rail-annot">write</text>
-          <text x="320" y="100" text-anchor="middle" class="annot rail-annot">crash</text>
-          <text x="520" y="100" text-anchor="middle" class="annot rail-annot">resume</text>
-        </svg>
-        <div class="rail-meta">
-          <span class="phase-chip rail-chip" id="rail-chip">ready</span>
-          <span class="rail-text" id="rail-text">Jury path idle</span>
+        <div class="mission-dock" id="mission-dock" hidden>
+          <ol class="dock-steps" aria-label="Mission path">
+            <li class="dock-step" data-dock="write"><span>Write</span></li>
+            <li class="dock-step" data-dock="crash"><span>Crash</span></li>
+            <li class="dock-step" data-dock="resume"><span>Resume</span></li>
+          </ol>
+          <span class="dock-chip" id="dock-chip">ready</span>
         </div>
       </div>
-    </div>
+    </header>
 
     <main id="top">
       <section class="demo-stage" id="demo-stage" data-phase="ready">
@@ -127,8 +104,8 @@
               </button>
             </div>
             <p class="hint" id="hint">
-              Start with <strong>Crash after step 2</strong> — the story curve
-              stays with you while CockroachDB holds the cursor.
+              Start with <strong>Crash after step 2</strong> — then resume from
+              CockroachDB without re-briefing the agent.
             </p>
           </div>
 
