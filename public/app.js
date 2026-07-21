@@ -260,7 +260,16 @@ function renderRecall(memories = []) {
       '<li class="empty">Memories appear here after the agent writes embeddings.</li>';
     return;
   }
-  recallEl.innerHTML = memories
+  const seen = new Set();
+  const unique = [];
+  for (const m of memories) {
+    const key = String(m.content || "").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(m);
+  }
+  const list = unique.length ? unique : memories.slice(0, 1);
+  recallEl.innerHTML = list
     .map((m) => {
       const dist =
         m.distance === undefined || m.distance === null

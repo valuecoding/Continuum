@@ -67,19 +67,11 @@ body {
 .mission-dock {
   display: none;
   align-items: center;
-  gap: 0.85rem;
-}
-
-body.is-live .nav {
-  display: none;
+  gap: 0.75rem;
 }
 
 body.is-live .mission-dock {
   display: flex;
-}
-
-body.is-live .hero-visual {
-  display: none;
 }
 
 .dock-steps {
@@ -169,38 +161,14 @@ body[data-phase="running"] .dock-chip {
   flex-direction: column;
 }
 
-.demo-stage.is-live .hero {
-  min-height: auto;
-  padding: 1.25rem 0 1rem;
-  align-items: start;
-}
-
-.demo-stage.is-live .hero h1 {
-  font-size: clamp(1.8rem, 3.6vw, 2.8rem);
-  max-width: 14ch;
-}
-
-.demo-stage.is-live .sub {
-  display: none;
-}
-
-.demo-stage.is-live .proof {
-  opacity: 1;
-  transform: translateY(0);
-}
-
 .proof {
   padding: 0.5rem 0 3.5rem;
   scroll-margin-top: 72px;
-  opacity: 0.72;
-  transform: translateY(8px);
-  transition: opacity 380ms ease, transform 380ms ease;
 }
 
 .demo-stage.is-live .proof,
 body.is-live .proof {
   opacity: 1;
-  transform: none;
 }
 
 .top-inner {
@@ -211,6 +179,14 @@ body.is-live .proof {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .mark {
@@ -1096,8 +1072,8 @@ main {
     max-width: none;
   }
 
-  body.is-live .mission-dock {
-    gap: 0.45rem;
+  body.is-live .top-actions {
+    gap: 0.55rem;
   }
 
   .dock-step span {
