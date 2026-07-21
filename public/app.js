@@ -63,7 +63,11 @@ const ARCH_COPY = {
   mcpNode: ARCH_TOUR[3].copy,
 };
 
-let archAutoplay = false;
+const archReduceMotion = window.matchMedia(
+  "(prefers-reduced-motion: reduce)"
+).matches;
+// Autoplay is ON by default; only reduced-motion users start paused.
+let archAutoplay = !archReduceMotion;
 let archTimer = null;
 let archIndex = 0;
 let archInView = false;
@@ -478,9 +482,9 @@ if (archSection && "IntersectionObserver" in window) {
   io.observe(archSection);
 }
 
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 setArchFlow("all");
-setArchAutoplay(false);
-if (reduceMotion) stopArchTour();
+// Keep Autoplay ON by default. Reduced-motion users get static paths, no tour.
+setArchAutoplay(!archReduceMotion);
+if (archReduceMotion) stopArchTour();
 setPhase("ready");
 call("status");
