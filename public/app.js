@@ -329,6 +329,7 @@ async function call(action) {
   logEl.textContent = `Running ${action}…`;
   if (action === "crash" || action === "resume" || action === "full") {
     setPhase("running", { engageLive: true });
+    revealProof();
   }
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 90_000);
@@ -340,12 +341,7 @@ async function call(action) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || res.statusText);
     applyPayload(data, action);
-    if (action === "crash") {
-      flashCrash();
-      revealProof();
-    } else if (action === "resume" || action === "full") {
-      revealProof();
-    }
+    if (action === "crash") flashCrash();
   } catch (err) {
     const message =
       err.name === "AbortError"
