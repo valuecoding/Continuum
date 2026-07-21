@@ -124,7 +124,6 @@
                 </filter>
               </defs>
               <ellipse cx="320" cy="170" rx="220" ry="100" fill="#0f766e" opacity="0.12" filter="url(#soft)" />
-              <!-- Curve tuned so markers sit on the stroke -->
               <path
                 class="ribbon-path"
                 d="M56 248 C 150 100, 230 300, 320 180 S 470 55, 584 148"
@@ -132,12 +131,14 @@
                 stroke-width="10"
                 stroke-linecap="round"
               />
-              <circle class="pulse p1" cx="137" cy="195" r="11" fill="#0f766e" />
-              <circle class="pulse p2" cx="320" cy="180" r="12" fill="#134e4a" />
-              <circle class="pulse p3" cx="455" cy="95" r="11" fill="#0e7490" />
-              <text x="137" y="290" text-anchor="middle" class="annot">write</text>
-              <text x="320" y="290" text-anchor="middle" class="annot">crash</text>
-              <text x="455" y="290" text-anchor="middle" class="annot">resume</text>
+              <g class="ribbon-marks">
+                <circle class="pulse p1" cx="137" cy="195" r="11" fill="#0f766e" />
+                <circle class="pulse p2" cx="320" cy="180" r="12" fill="#134e4a" />
+                <circle class="pulse p3" cx="455" cy="95" r="11" fill="#0e7490" />
+                <text x="137" y="290" text-anchor="middle" class="annot">write</text>
+                <text x="320" y="290" text-anchor="middle" class="annot">crash</text>
+                <text x="455" y="290" text-anchor="middle" class="annot">resume</text>
+              </g>
             </svg>
             <div class="phase-chip" id="phase-chip">ready</div>
           </div>
