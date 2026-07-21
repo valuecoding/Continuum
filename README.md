@@ -116,8 +116,16 @@ src/demo/crash-resume.js  CLI jury proof
 src/server.js             Local demo UI
 public/                   Premium demo UI
 docs/images/              README screenshots
-.cursor/mcp.json          CockroachDB Cloud MCP
+.cursor/mcp.json.example  CockroachDB Cloud MCP template (copy to mcp.json locally)
 ```
+
+Copy the MCP template locally (not committed):
+
+```bash
+cp .cursor/mcp.json.example .cursor/mcp.json
+```
+
+Then set your cluster id in `.cursor/mcp.json`.
 
 ## License
 
