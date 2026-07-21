@@ -69,6 +69,7 @@ let archIndex = 0;
 let archInView = false;
 
 let currentPhase = "ready";
+let demoEngaged = false;
 
 function setBusy(busy) {
   for (const btn of buttons) {
@@ -93,6 +94,7 @@ function flashCrash() {
 }
 
 function setLive(on) {
+  demoEngaged = on;
   document.body.classList.toggle("is-live", on);
   demoStage?.classList.toggle("is-live", on);
   if (missionDock) missionDock.hidden = !on;
@@ -127,12 +129,14 @@ function syncDock(phase) {
   if (dockChip) dockChip.textContent = phase;
 }
 
-function setPhase(phase, { sessionId, keepLive = false } = {}) {
+function setPhase(phase, { sessionId, engageLive = false } = {}) {
   currentPhase = phase;
   const short = sessionId ? sessionId.slice(0, 8) : null;
-  const live = keepLive || phase !== "ready";
 
-  setLive(live);
+  // Hero ribbon stays until the user actually runs crash/resume/full.
+  if (engageLive) setLive(true);
+  if (phase === "ready" && !engageLive) setLive(false);
+
   document.body.dataset.phase = phase;
   if (demoStage) demoStage.dataset.phase = phase;
   if (heroVisual) heroVisual.dataset.phase = phase;
@@ -156,16 +160,18 @@ function setPhase(phase, { sessionId, keepLive = false } = {}) {
     phaseText.textContent = short
       ? `Agent crashed after step 2 · session ${short} still lives in CockroachDB.`
       : "Agent crashed mid-mission. Memory is durable — hit Resume.";
-    hintEl.innerHTML =
-      "Process is dead. Press <strong>Resume from memory</strong> to continue from the next pending step.";
+    hintEl.innerHTML = demoEngaged
+      ? "Process is dead. Press <strong>Resume from memory</strong> to continue from the next pending step."
+      : "A crashed session is waiting in CockroachDB. Press <strong>Crash after step 2</strong> for a fresh proof, or <strong>Resume</strong>.";
     btnResume.disabled = false;
     btnCrash.classList.remove("is-pulse");
-    btnResume.classList.add("is-pulse");
+    if (demoEngaged) btnResume.classList.add("is-pulse");
   } else if (phase === "completed") {
     phaseText.textContent = short
       ? `Mission completed from durable memory · ${short}`
       : "Mission completed from durable memory.";
-    hintEl.innerHTML = "Done. Crash again anytime to replay the jury path.";
+    hintEl.innerHTML =
+      "Done. Press <strong>Crash after step 2</strong> anytime to replay the jury path.";
     btnResume.disabled = true;
     btnResume.classList.remove("is-pulse");
   } else if (phase === "running") {
@@ -178,7 +184,6 @@ function setPhase(phase, { sessionId, keepLive = false } = {}) {
       "Start with <strong>Crash after step 2</strong> — then resume from CockroachDB without re-briefing the agent.";
     btnResume.disabled = true;
     btnResume.classList.remove("is-pulse");
-    if (!keepLive) setLive(false);
   }
 }
 
@@ -285,24 +290,25 @@ function applyPayload(data, action) {
   renderTimeline(data.session, data.tasks || []);
   renderRecall(data.memories || []);
 
+  const engageLive = action === "crash" || action === "resume" || action === "full";
   const status = data.session?.status || "ready";
   if (action === "crash" || status === "crashed") {
-    setPhase("crashed", { sessionId: data.session?.id });
+    setPhase("crashed", { sessionId: data.session?.id, engageLive });
   } else if (status === "completed") {
-    setPhase("completed", { sessionId: data.session?.id });
+    setPhase("completed", { sessionId: data.session?.id, engageLive });
   } else if (status === "running") {
-    setPhase("running", { sessionId: data.session?.id });
+    setPhase("running", { sessionId: data.session?.id, engageLive });
   } else if (!data.session) {
     setPhase("ready");
   } else {
     setPhase(status === "paused" ? "running" : "ready", {
       sessionId: data.session?.id,
+      engageLive,
     });
   }
 }
 
 function revealProof() {
-  setLive(true);
   document.getElementById("proof")?.scrollIntoView({
     behavior: "smooth",
     block: "start",
@@ -313,7 +319,7 @@ async function call(action) {
   setBusy(true);
   logEl.textContent = `Running ${action}…`;
   if (action === "crash" || action === "resume" || action === "full") {
-    setPhase("running", { keepLive: true });
+    setPhase("running", { engageLive: true });
   }
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 90_000);
@@ -337,7 +343,7 @@ async function call(action) {
         ? "Request timed out. Try again."
         : String(err.message || err);
     logEl.textContent = message;
-    if (currentPhase === "running") setPhase("ready");
+    if (currentPhase === "running" && !demoEngaged) setPhase("ready");
   } finally {
     window.clearTimeout(timeout);
     setBusy(false);
