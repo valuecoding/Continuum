@@ -14,6 +14,7 @@
     "demo:kill": "node src/demo/crash-resume.js --crash-midway",
     "demo:resume": "node src/demo/crash-resume.js --resume",
     "test:bedrock": "node src/demo/test-bedrock.js",
+    "capture:preview": "node scripts/capture-preview.js",
     "video:draft": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-demo-video.ps1",
     "video:audio": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-video-audio.ps1",
     "agent": "node src/agent/cli.js",
