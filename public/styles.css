@@ -931,24 +931,6 @@ main {
   opacity: 0;
 }
 
-.packet {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.arch[data-flow="all"] .packet,
-.arch[data-flow="state"] .packet-state,
-.arch[data-flow="vector"] .packet-vector,
-.arch[data-flow="mcp"] .packet-mcp {
-  opacity: 1;
-}
-
-.arch[data-flow="state"] .packet:not(.packet-state),
-.arch[data-flow="vector"] .packet:not(.packet-vector),
-.arch[data-flow="mcp"] .packet:not(.packet-mcp) {
-  opacity: 0;
-}
-
 .edge-tag {
   opacity: 0.4;
   transition: opacity 280ms ease;
