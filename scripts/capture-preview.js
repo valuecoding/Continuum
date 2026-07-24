@@ -45,7 +45,7 @@ try {
 
   await page.locator("#btn-crash").click();
   await waitStatus(page, "crashed");
-  await page.locator("#proof").evaluate((el) =>
+  await page.locator("#proof-console").evaluate((el) =>
     el.scrollIntoView({ behavior: "instant", block: "start" })
   );
   await page.waitForTimeout(250);
@@ -56,7 +56,7 @@ try {
 
   await page.locator("#btn-resume").click();
   await waitStatus(page, "completed");
-  await page.locator("#proof").evaluate((el) =>
+  await page.locator("#proof-console").evaluate((el) =>
     el.scrollIntoView({ behavior: "instant", block: "start" })
   );
   await page.waitForTimeout(250);

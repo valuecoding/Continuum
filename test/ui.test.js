@@ -145,12 +145,62 @@ test("browser proof isolates and resumes its own session", async (context) => {
       await page.locator("#phase-text").textContent(),
       /step 02 committed/i
     );
+    await page.waitForFunction(() => {
+      const proof = document.getElementById("proof-console");
+      const header = document.querySelector(".top");
+      if (!proof || !header) return false;
+      const expectedTop = header.getBoundingClientRect().bottom + 12;
+      return Math.abs(proof.getBoundingClientRect().top - expectedTop) < 3;
+    });
+    assert.match(
+      await page.locator("#btn-resume-label").textContent(),
+      /resume invocation b/i
+    );
+    assert.equal(await page.locator("#btn-resume").isEnabled(), true);
 
     await page.locator("#btn-resume").click();
     await page.waitForFunction(() => document.body.dataset.phase === "completed");
     assert.equal(resumeHeader, SESSION_ID);
     assert.equal(await page.locator("#stat-completed").textContent(), "4/4");
     assert.equal(await page.locator("#stat-provider").textContent(), "Bedrock");
+    assert.match(
+      await page.locator("#btn-resume-label").textContent(),
+      /recovery verified/i
+    );
+
+    await page.mouse.move(1, 1);
+    await page.locator("#architecture").scrollIntoViewIfNeeded();
+    await page.waitForFunction(() =>
+      document.getElementById("arch-story").classList.contains("is-playing")
+    );
+    await page.waitForTimeout(650);
+    await page.locator(".arch-figure").hover();
+    await page.waitForTimeout(80);
+    const pausedProgress = await page.evaluate(() => {
+      const bar = document.getElementById("arch-progress-bar");
+      return bar.getBoundingClientRect().width / bar.parentElement.clientWidth;
+    });
+    await page.waitForTimeout(320);
+    const heldProgress = await page.evaluate(() => {
+      const bar = document.getElementById("arch-progress-bar");
+      return bar.getBoundingClientRect().width / bar.parentElement.clientWidth;
+    });
+    assert.ok(pausedProgress > 0.05);
+    assert.ok(Math.abs(heldProgress - pausedProgress) < 0.015);
+
+    await page.locator("#arch-stage-title").hover();
+    await page.waitForTimeout(80);
+    const resumedProgress = await page.evaluate(() => {
+      const bar = document.getElementById("arch-progress-bar");
+      return bar.getBoundingClientRect().width / bar.parentElement.clientWidth;
+    });
+    await page.waitForTimeout(320);
+    const advancedProgress = await page.evaluate(() => {
+      const bar = document.getElementById("arch-progress-bar");
+      return bar.getBoundingClientRect().width / bar.parentElement.clientWidth;
+    });
+    assert.ok(resumedProgress >= pausedProgress - 0.015);
+    assert.ok(advancedProgress > resumedProgress + 0.025);
 
     await page.locator("#arch-tab-0").focus();
     await page.keyboard.press("ArrowRight");

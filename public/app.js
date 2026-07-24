@@ -14,6 +14,10 @@ const checkpointState = document.getElementById("checkpoint-state");
 const handoffState = document.getElementById("handoff-state");
 const btnCrash = document.getElementById("btn-crash");
 const btnResume = document.getElementById("btn-resume");
+const btnResumeLabel = document.getElementById("btn-resume-label");
+const btnResumeDetail = document.getElementById("btn-resume-detail");
+const proofConsole = document.getElementById("proof-console");
+const stickyHeader = document.querySelector(".top");
 const buttons = [...document.querySelectorAll("[data-action]")];
 
 const archSvg = document.getElementById("arch-svg");
@@ -72,6 +76,8 @@ let lastRunMode = "recovery";
 let busy = false;
 let archAutoplay = !reduceMotion;
 let archTimer = null;
+let archDeadline = 0;
+let archRemainingMs = null;
 let archIndex = 0;
 let archInView = false;
 let archHoverPaused = false;
@@ -135,6 +141,8 @@ function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
     handoffState.textContent = "pending";
     hintEl.innerHTML =
       "<span>Running</span> Durable writes are in flight. The proof will stop after step 02.";
+    btnResumeLabel.textContent = "Writing checkpoints";
+    btnResumeDetail.textContent = "Invocation A is in progress";
   } else if (phase === "crashed") {
     phaseText.textContent = shortId
       ? `Invocation A stopped · step 02 committed · ${shortId}`
@@ -145,6 +153,8 @@ function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
     handoffState.textContent = "available";
     hintEl.innerHTML =
       "<span>Next</span> Start invocation B. It will load this exact session and continue at step 03.";
+    btnResumeLabel.textContent = "Resume invocation B";
+    btnResumeDetail.textContent = "Continue at step 03";
   } else if (phase === "completed" && mode === "full") {
     phaseText.textContent = shortId
       ? `Single invocation completed all four steps · ${shortId}`
@@ -155,6 +165,8 @@ function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
     handoffState.textContent = "not required";
     hintEl.innerHTML =
       "<span>Complete</span> Run the crash proof next to demonstrate the recovery boundary.";
+    btnResumeLabel.textContent = "Single run complete";
+    btnResumeDetail.textContent = "No recovery was required";
   } else if (phase === "completed") {
     phaseText.textContent = shortId
       ? `Invocation B resumed at step 03 and completed · ${shortId}`
@@ -165,6 +177,8 @@ function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
     handoffState.textContent = "complete";
     hintEl.innerHTML =
       "<span>Verified</span> Invocation B skipped committed work and finished the same mission.";
+    btnResumeLabel.textContent = "Recovery verified";
+    btnResumeDetail.textContent = "4 / 4 steps committed";
   } else {
     phaseText.textContent = "Ready to create a client-scoped mission.";
     runtimeAState.textContent = "waiting";
@@ -173,6 +187,8 @@ function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
     handoffState.textContent = "not required";
     hintEl.innerHTML =
       "<span>Jury path</span> Crash first, then resume the same client-scoped session.";
+    btnResumeLabel.textContent = "Resume invocation B";
+    btnResumeDetail.textContent = "Available after the crash";
   }
 
   syncActions();
@@ -346,9 +362,15 @@ async function call(action) {
   if (["crash", "resume", "full"].includes(action)) {
     lastRunMode = action === "full" ? "full" : "recovery";
     setPhase("running", { mode: lastRunMode });
-    document.getElementById("proof").scrollIntoView({
+    const headerHeight = stickyHeader?.getBoundingClientRect().height || 70;
+    const targetTop =
+      window.scrollY +
+      proofConsole.getBoundingClientRect().top -
+      headerHeight -
+      12;
+    window.scrollTo({
+      top: Math.max(0, targetTop),
       behavior: reduceMotion ? "auto" : "smooth",
-      block: "start",
     });
   }
 
@@ -388,6 +410,7 @@ function clearArchTimer() {
   if (!archTimer) return;
   window.clearTimeout(archTimer);
   archTimer = null;
+  archDeadline = 0;
 }
 
 function syncArchPause() {
@@ -443,12 +466,23 @@ function stopArchTour() {
   archStory.classList.remove("is-playing", "is-paused");
 }
 
-function scheduleArchTour() {
+function scheduleArchTour({ resume = false } = {}) {
   clearArchTimer();
   if (!archAutoplay || !archInView || archTourBlocked()) return;
-  const dwell = ARCH_STEPS[archIndex].dwellMs;
-  restartArchProgress(dwell);
+  const canResume =
+    resume &&
+    archRemainingMs !== null &&
+    archStory.classList.contains("is-playing");
+  const dwell = canResume
+    ? archRemainingMs
+    : ARCH_STEPS[archIndex].dwellMs;
+  if (!canResume) restartArchProgress(dwell);
+  archRemainingMs = dwell;
+  archDeadline = performance.now() + dwell;
   archTimer = window.setTimeout(() => {
+    archTimer = null;
+    archDeadline = 0;
+    archRemainingMs = null;
     setArchStep(archIndex + 1);
     scheduleArchTour();
   }, dwell);
@@ -461,11 +495,19 @@ function setArchAutoplay(nextAutoplay) {
 }
 
 function setArchPaused(kind, paused) {
+  const wasBlocked = archTourBlocked();
   if (kind === "hover") archHoverPaused = paused;
   if (kind === "focus") archFocusPaused = paused;
+  const blocked = archTourBlocked();
   syncArchPause();
-  if (archTourBlocked()) clearArchTimer();
-  else scheduleArchTour();
+  if (!wasBlocked && blocked) {
+    if (archTimer && archDeadline) {
+      archRemainingMs = Math.max(0, archDeadline - performance.now());
+    }
+    clearArchTimer();
+  } else if (wasBlocked && !blocked) {
+    scheduleArchTour({ resume: true });
+  }
 }
 
 function measureArchInView() {

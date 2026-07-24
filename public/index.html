@@ -102,16 +102,6 @@
               </button>
               <button
                 type="button"
-                class="btn btn-resume"
-                id="btn-resume"
-                data-action="resume"
-                disabled
-              >
-                <span>Resume from memory</span>
-                <small>Starts invocation B</small>
-              </button>
-              <button
-                type="button"
                 class="btn-text"
                 id="btn-full"
                 data-action="full"
@@ -206,7 +196,7 @@
           </p>
         </div>
 
-        <div class="proof-console">
+        <div class="proof-console" id="proof-console">
           <div class="console-topline">
             <div
               class="phase-banner"
@@ -218,7 +208,19 @@
               <span class="phase-dot" aria-hidden="true"></span>
               <span id="phase-text">Ready to create a mission.</span>
             </div>
-            <span id="session-meta" class="session-meta">no client session</span>
+            <div class="console-controls">
+              <span id="session-meta" class="session-meta">no client session</span>
+              <button
+                type="button"
+                class="btn btn-resume btn-console"
+                id="btn-resume"
+                data-action="resume"
+                disabled
+              >
+                <span id="btn-resume-label">Resume invocation B</span>
+                <small id="btn-resume-detail">Available after the crash</small>
+              </button>
+            </div>
           </div>
 
           <div class="proof-grid">

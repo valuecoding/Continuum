@@ -266,11 +266,15 @@ a {
 }
 
 .cta {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   max-width: 590px;
   margin-top: 2rem;
+}
+
+.cta .btn-crash {
+  width: min(100%, 310px);
 }
 
 .btn,
@@ -350,7 +354,6 @@ a {
 }
 
 .btn-text {
-  grid-column: 1 / -1;
   width: max-content;
   padding: 0.38rem 0;
   color: var(--muted);
@@ -773,12 +776,45 @@ a {
 }
 
 .console-topline {
-  min-height: 62px;
+  min-height: 74px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.65rem 0.9rem 1rem;
+}
+
+.console-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.btn-console {
+  min-width: 190px;
+  min-height: 50px;
+  flex: none;
+  padding: 0.58rem 0.82rem;
+  border-color: rgba(141, 227, 214, 0.22);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.btn-console > span {
+  font-size: 0.84rem;
+}
+
+.btn-console small {
+  font-size: 0.56rem;
+}
+
+.btn-console:disabled {
+  color: #718983;
+  border-color: var(--console-line);
+  background: rgba(255, 255, 255, 0.045);
+  opacity: 1;
 }
 
 .phase-banner {
@@ -1657,6 +1693,14 @@ a {
     grid-template-columns: 1fr;
   }
 
+  .side-stack {
+    display: contents;
+  }
+
+  .evidence-panel {
+    order: -1;
+  }
+
   .timeline {
     min-height: 0;
   }
@@ -1718,11 +1762,12 @@ a {
   }
 
   .cta {
-    grid-template-columns: 1fr;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .btn-text {
-    grid-column: auto;
+    align-self: flex-start;
   }
 
   .hint {
@@ -1795,7 +1840,18 @@ a {
     flex-direction: column;
   }
 
+  .console-controls {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
   .session-meta {
+    width: 100%;
+  }
+
+  .btn-console {
     width: 100%;
   }
 
