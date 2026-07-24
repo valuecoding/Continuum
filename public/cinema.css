@@ -9,7 +9,7 @@ html.cinema .hero h1 {
   font-size: clamp(3rem, 5.2vw, 4.8rem);
 }
 
-html.cinema .sub {
+html.cinema .hero-sub {
   font-size: 1.2rem;
   max-width: 42ch;
 }

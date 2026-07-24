@@ -17,13 +17,18 @@
     "capture:preview": "node scripts/capture-preview.js",
     "video:draft": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-demo-video.ps1",
     "video:audio": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-video-audio.ps1",
-    "agent": "node src/agent/cli.js",
-    "dev:server": "node src/server.js"
+    "agent": "node src/demo/crash-resume.js",
+    "dev:server": "node src/server.js",
+    "test": "node --test test/session.test.js test/embeddings.test.js test/server-boundary.test.js",
+    "test:ui": "node --test test/ui.test.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.848.0",
     "dotenv": "^16.6.1",
     "pg": "^8.16.3",
     "playwright-core": "^1.61.1"
+  },
+  "devDependencies": {
+    "wrangler": "4.113.0"
   }
 }

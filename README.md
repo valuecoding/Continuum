@@ -1,69 +1,134 @@
 # Continuum
 
-**Agents that remember after they die.**
+**The runtime stops. The mission continues.**
 
-Continuum is an agentic application whose durable memory lives in **CockroachDB** — task state, event log, and semantic embeddings in one database — with **Amazon Bedrock** Titan embeddings on AWS.
+Continuum is a crash-resilient agent runtime whose task cursor, event trail, and
+semantic memory live in CockroachDB. Amazon Bedrock Titan Embeddings V2 turns
+memory text into normalized 1024-dimensional vectors; a fresh runtime request
+can recover the same mission without a human re-brief.
 
 > Built for the CockroachDB × AWS Hackathon — Build with Agentic Memory.
 
 | | |
 | --- | --- |
-| **Live demo** | [https://continuum.vortex-digital.de](https://continuum.vortex-digital.de) |
-| **Video** | [https://youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI) |
-| **Repo** | [github.com/valuecoding/Continuum](https://github.com/valuecoding/Continuum) |
-
-### How judges try it (≈30 seconds)
-
-1. Open the [live demo](https://continuum.vortex-digital.de)
-2. Click **Crash after step 2** — timeline freezes mid-mission; state is in CockroachDB
-3. Click **Resume from memory** — remaining steps finish from durable memory
-4. Optional: scroll to **Architecture** and click nodes / path tabs
+| **Live demo** | [continuum.vortex-digital.de](https://continuum.vortex-digital.de) |
+| **Video** | [youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI) |
+| **Repository** | [github.com/valuecoding/Continuum](https://github.com/valuecoding/Continuum) |
 
 ![Continuum landing](docs/images/landing.png)
 
-## Why Continuum
+## The 30-second jury proof
 
-Most demo agents keep memory in process RAM. When the process dies, the agent forgets everything and needs a human to re-brief it.
+1. Open the [live demo](https://continuum.vortex-digital.de).
+2. Select **Run the crash proof**.
+3. Invocation A commits step 2, records the failure boundary, and stops.
+4. Inspect the task cursor, event count, and vector memories read back from
+   CockroachDB.
+5. Select **Resume from memory**.
+6. Invocation B loads the same client-scoped session, skips completed work, and
+   continues at step 3.
 
-Continuum treats CockroachDB as the system of record:
+![Crashed after the second committed step](docs/images/crashed.png)
 
-- **Transactional task cursor** — which step was running when the process died
-- **Event log** — auditable trail of what happened
-- **Vector memories** — semantic recall of past incidents and decisions in the same database
+After recovery, all four steps belong to the same CockroachDB session:
 
-Jury proof: start a mission → crash after step 2 → resume → remaining steps continue from CockroachDB without re-explaining the goal.
+![Recovered and completed mission](docs/images/resumed.png)
 
-![Crashed mid-mission](docs/images/crashed.png)
+## Why the memory layer matters
 
-After resume, the unfinished steps complete from durable memory:
+Most agent demos keep workflow position in process memory. If compute
+disappears, the agent either starts over or needs a human to explain the
+mission again.
 
-![Resumed and completed](docs/images/resumed.png)
+Continuum makes CockroachDB the system of record:
 
-## CockroachDB tools used
+- **Ordered task cursor** — pending, in-progress, and completed steps survive
+  the runtime boundary.
+- **Append-only event trail** — every start, completion, failure, and resume is
+  inspectable.
+- **Semantic memory** — text, metadata, embedding provider, and `VECTOR(1024)`
+  stay beside transactional state.
+- **Client-scoped recovery** — a browser can resume only the session identifier
+  it created, never another visitor's latest run.
 
-| Tool | How Continuum uses it |
-| --- | --- |
-| **Distributed Vector Indexing** | `agent_memories.embedding VECTOR(1024)` + vector distance recall |
-| **Cloud Managed MCP Server** | Cursor connects to the cluster via `.cursor/mcp.json` for schema exploration / ops |
+The public proof uses a deterministic simulated runtime stop after committed
+step 2 so judges can replay the same boundary on demand. Recovery itself does
+not depend on an in-memory session object: the next HTTP request supplies only
+the session UUID and reconstructs the mission from CockroachDB.
 
-## AWS services used
+## Architecture
 
-| Service | How Continuum uses it |
-| --- | --- |
-| **Amazon Bedrock** | Titan Text Embeddings V2 (`amazon.titan-embed-text-v2:0`) via bearer token; local embeddings as offline fallback |
-| **CockroachDB Cloud on AWS** | Basic cluster in `eu-central-1` (Frankfurt) |
+```text
+Browser
+  │
+  │ POST /api/crash
+  ▼
+Cloudflare Worker · invocation A
+  ├── session / tasks / events ─────────────▶ CockroachDB
+  ├── memory text ──────────────────────────▶ Amazon Bedrock
+  │                                              │
+  └── content + metadata + VECTOR(1024) ◀────────┘
+                    │
+              deterministic stop
+                    │
+Browser stores only the returned session UUID
+                    │
+  │ POST /api/resume + X-Continuum-Session
+  ▼
+Cloudflare Worker · invocation B
+  └── reads cursor + recalls memory ─────────▶ CockroachDB
+      skips steps 1–2 and continues at step 3
+
+Cursor agent ── Managed MCP Server ─ ─ ─ ─ ─▶ same CockroachDB cluster
+             separate read-only inspection plane
+```
+
+![Continuum architecture](docs/images/architecture.png)
+
+The runtime — not CockroachDB — orchestrates the Bedrock request. Managed MCP
+is deliberately shown outside the production data path because it is used by
+the developer agent to inspect the live cluster.
+
+## Hackathon integrations
+
+### CockroachDB Distributed Vector Indexing
+
+`agent_memories.embedding` is a `VECTOR(1024)` column. Semantic recall orders
+memories by vector distance while task state and vector memory remain in one
+database. The migration attempts to create the distributed vector index and
+falls back safely on clusters where that feature is unavailable.
+
+### CockroachDB Cloud Managed MCP Server
+
+Cursor connects to the live cluster through the managed MCP endpoint for schema
+inspection and database operations. This is a developer-agent inspection plane,
+not a fake runtime hop. Copy `.cursor/mcp.json.example` to the ignored local
+`.cursor/mcp.json` and insert the cluster identifier from CockroachDB Cloud.
+
+### Amazon Bedrock
+
+The runtime calls `amazon.titan-embed-text-v2:0` in `eu-central-1`. Each memory
+records `embed_provider` in its metadata, so the UI exposes whether a vector
+came from Bedrock or the deterministic offline fallback.
+
+### CockroachDB Cloud on AWS
+
+The managed CockroachDB cluster runs in AWS `eu-central-1`. The public
+Cloudflare Worker reaches it through Hyperdrive with query caching disabled for
+read-after-write consistency in the crash/resume proof.
 
 ## Quick start
 
 ### Requirements
 
-- Node.js 20+
-- CockroachDB Cloud cluster + SQL user
-- CA cert at `%APPDATA%\postgresql\root.crt` (Windows)
-- `.env` with `DATABASE_URL` (see `.env.example`)
-- Optional: `AWS_BEARER_TOKEN_BEDROCK` for real Titan embeddings
+- Node.js 20 or newer
+- CockroachDB Cloud cluster and SQL user
+- CockroachDB root CA at `%APPDATA%\postgresql\root.crt` on Windows
+- `.env` based on `.env.example`
+- optional Bedrock bearer token or AWS credentials
+- Google Chrome for the browser test and preview capture
 
-### Install & migrate
+### Install and migrate
 
 ```bash
 npm install
@@ -71,92 +136,78 @@ npm run db:ping
 npm run db:migrate
 ```
 
-### Crash / resume demo (CLI)
+### Local UI
+
+```bash
+npm run dev:server
+```
+
+Open [http://127.0.0.1:8787](http://127.0.0.1:8787).
+
+### CLI proof
 
 ```bash
 npm run demo:kill
 npm run demo:resume
 ```
 
-### Demo UI (local)
+### Verification
 
 ```bash
-npm run dev:server
+npm test
+npm run test:ui
 ```
 
-Open [http://127.0.0.1:8787](http://127.0.0.1:8787)
+The unit suite verifies UUID isolation and deterministic normalized fallback
+embeddings. The real-Chrome suite verifies the complete crash/resume UI at
+desktop and mobile widths, the `X-Continuum-Session` handoff, responsive
+overflow, provider evidence, and keyboard-operable architecture tabs.
 
-### Public demo (Cloudflare Workers)
+### Deploy
 
-Production UI + API run on Cloudflare Workers with Hyperdrive → CockroachDB:
-
-- URL: [https://continuum.vortex-digital.de](https://continuum.vortex-digital.de)
-- Config: `wrangler.toml`, entry `src/cf-worker.js`
-- Secrets (not in git): `AWS_BEARER_TOKEN_BEDROCK` via `wrangler secret`
-- Hyperdrive query cache is **disabled** for read-after-write crash/resume consistency
+Production assets and APIs run in a Cloudflare Worker with Hyperdrive:
 
 ```bash
 npx wrangler deploy
 ```
 
-### Preview screenshots
+Configuration lives in `wrangler.toml`. Secrets such as
+`AWS_BEARER_TOKEN_BEDROCK` are set through Wrangler and are never committed.
+The Worker adds HSTS, CSP, anti-framing, MIME-sniffing, referrer, and permissions
+security headers.
+
+## Project layout
+
+```text
+sql/001_init.sql          CockroachDB tables and vector index definition
+src/agent/runtime.js      Checkpointed four-step mission runtime
+src/memory/               Embedding provider and durable memory store
+src/db/                   CockroachDB / Hyperdrive client and migration
+src/http/session.js       Strict client-session UUID boundary
+src/server.js             Local UI and API server
+src/cf-worker.js          Production Worker, Hyperdrive, and security headers
+public/                   Submission website and interactive architecture
+test/                     Unit and real-browser recovery tests
+scripts/                  Screenshot and narrated-video pipelines
+```
+
+## Reproduce submission assets
 
 ```bash
 npm run capture:preview
 ```
 
-## Reproduce the submission video
+This writes the real UI states to `docs/images/`.
 
-Narrated 1080p demo from the real Continuum UI (not a mockup):
+For the narrated 1080p video:
 
 ```powershell
 npm.cmd run video:draft
 ```
 
-Writes `artifacts/video/Continuum-hackathon-demo.mp4` plus captions. Narration source: `docs/video/narration.json`. Disclose on YouTube that narration is AI-generated.
-
-Public video: [https://youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI)
-
-## Architecture
-
-![Architecture](docs/images/architecture.png)
-
-```text
-Browser demo UI  (Cloudflare Worker + assets)
-   │
-   ▼
-Agent runtime ──writes──▶ agent_sessions / agent_tasks / agent_events
-        │
-        └──embeds/recalls──▶ agent_memories (VECTOR)  in CockroachDB (AWS eu-central-1)
-                                    ▲
-Hyperdrive (cache disabled) ────────┘
-Cursor / MCP ───────────────────────┘  (cockroachlabs.cloud/mcp)
-Amazon Bedrock Titan Embeddings V2 ──▶ same VECTOR column
-```
-
-## Project layout
-
-```text
-sql/001_init.sql          Schema
-src/db/                   CockroachDB client + migrate
-src/memory/               Embeddings + durable store
-src/agent/runtime.js      Mission runner with crash simulation
-src/demo/crash-resume.js  CLI jury proof
-src/server.js             Local demo UI
-src/cf-worker.js          Cloudflare Workers entry (Hyperdrive)
-wrangler.toml             Workers + custom domain + Hyperdrive
-public/                   Premium demo UI
-docs/images/              README screenshots
-.cursor/mcp.json.example  CockroachDB Cloud MCP template (copy to mcp.json locally)
-```
-
-Copy the MCP template locally (not committed):
-
-```bash
-cp .cursor/mcp.json.example .cursor/mcp.json
-```
-
-Then set your cluster id in `.cursor/mcp.json`.
+The output is written below `artifacts/video/`. Narration source is versioned in
+`docs/video/narration.json`; public uploads should disclose AI-generated
+narration.
 
 ## License
 

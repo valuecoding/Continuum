@@ -109,17 +109,22 @@ export async function remember({
   return rows[0];
 }
 
-export async function recall(queryText, { scope = "global", limit = 5 } = {}) {
+export async function recall(
+  queryText,
+  { scope = "global", limit = 5, sessionId = null } = {}
+) {
   const { literal } = await embedText(queryText);
+  const safeLimit = Math.max(1, Math.min(Number(limit) || 5, 20));
   try {
     const { rows } = await query(
       `SELECT id, scope, kind, content, metadata, created_at,
               embedding <-> $1::VECTOR AS distance
        FROM agent_memories
        WHERE scope = $2
+         AND ($3::UUID IS NULL OR session_id = $3::UUID)
        ORDER BY embedding <-> $1::VECTOR
-       LIMIT $3`,
-      [literal, scope, limit]
+       LIMIT $4`,
+      [literal, scope, sessionId, safeLimit]
     );
     return rows;
   } catch {
@@ -128,9 +133,10 @@ export async function recall(queryText, { scope = "global", limit = 5 } = {}) {
       `SELECT id, scope, kind, content, metadata, created_at
        FROM agent_memories
        WHERE scope = $1
+         AND ($2::UUID IS NULL OR session_id = $2::UUID)
        ORDER BY created_at DESC
-       LIMIT $2`,
-      [scope, limit]
+       LIMIT $3`,
+      [scope, sessionId, safeLimit]
     );
     return rows;
   }

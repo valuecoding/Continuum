@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { AsyncLocalStorage } from "node:async_hooks";
 import pg from "pg";
 
 const { Pool, Client } = pg;
@@ -6,8 +7,11 @@ const { Pool, Client } = pg;
 /** Optional override for Workers/Hyperdrive (no local CA file). */
 let overrideConfig = null;
 
-/** Request-scoped Client for Workers — Hyperdrive pools; never use pg.Pool there. */
-let requestClient = null;
+/**
+ * Request-scoped Client for Workers. A module-global mutable client can leak
+ * across concurrent Worker requests, so keep it in async context instead.
+ */
+const requestClients = new AsyncLocalStorage();
 
 /** Local Node pool (CLI / demo server only). */
 let pool;
@@ -68,11 +72,9 @@ export async function withRequestClient(fn) {
     connectionTimeoutMillis: 10_000,
   });
   await client.connect();
-  requestClient = client;
   try {
-    return await fn(client);
+    return await requestClients.run(client, () => fn(client));
   } finally {
-    requestClient = null;
     try {
       await client.end();
     } catch {
@@ -94,6 +96,7 @@ export function getPool() {
 }
 
 export async function query(text, params = []) {
+  const requestClient = requestClients.getStore();
   if (requestClient) {
     return requestClient.query(text, params);
   }
@@ -101,6 +104,7 @@ export async function query(text, params = []) {
 }
 
 export async function withClient(fn) {
+  const requestClient = requestClients.getStore();
   if (requestClient) {
     return fn(requestClient);
   }

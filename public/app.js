@@ -5,194 +5,177 @@ const sessionMeta = document.getElementById("session-meta");
 const phaseBanner = document.getElementById("phase-banner");
 const phaseText = document.getElementById("phase-text");
 const phaseChip = document.getElementById("phase-chip");
-const dockChip = document.getElementById("dock-chip");
-const missionDock = document.getElementById("mission-dock");
-const demoStage = document.getElementById("demo-stage");
-const heroVisual = document.querySelector(".hero-visual");
 const hintEl = document.getElementById("hint");
 const fxLayer = document.getElementById("fx-layer");
-const journeySteps = [...document.querySelectorAll(".journey-step")];
-const dockSteps = [...document.querySelectorAll(".dock-step")];
+const continuityCard = document.getElementById("continuity-card");
+const runtimeAState = document.getElementById("runtime-a-state");
+const runtimeBState = document.getElementById("runtime-b-state");
+const checkpointState = document.getElementById("checkpoint-state");
+const handoffState = document.getElementById("handoff-state");
 const btnCrash = document.getElementById("btn-crash");
 const btnResume = document.getElementById("btn-resume");
 const buttons = [...document.querySelectorAll("[data-action]")];
+
 const archSvg = document.getElementById("arch-svg");
 const archCaption = document.getElementById("arch-caption");
 const archStageTitle = document.getElementById("arch-stage-title");
-const archStageN = document.getElementById("arch-stage-n");
-const archPlay = document.getElementById("arch-play");
+const archKicker = document.getElementById("arch-kicker");
 const archSection = document.getElementById("architecture");
-const archTabs = [...document.querySelectorAll(".arch-tab")];
+const archStory = document.getElementById("arch-story");
+const archFigure = document.querySelector(".arch-figure");
+const archPanel = document.getElementById("arch-panel");
+const archProgressBar = document.getElementById("arch-progress-bar");
+const archStepBtns = [...document.querySelectorAll(".arch-step")];
 const archNodes = [...document.querySelectorAll(".arch-node")];
 
-const ARCH_TOUR = [
+const SESSION_KEY = "continuum.client-session";
+const SESSION_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const ARCH_STEPS = [
   {
-    flow: "all",
-    n: "01",
-    title: "Full path",
-    copy: "Runtime writes durable state into CockroachDB, asks Bedrock for embeddings, stores VECTOR memories, then MCP can inspect the live cluster.",
+    title: "Commit the task cursor",
+    copy:
+      "Invocation A writes session, task, and event rows before the failure boundary. Completed steps will not run again.",
+    hot: ["runtime-a", "crdb"],
+    dwellMs: 5200,
   },
   {
-    flow: "state",
-    n: "02",
-    title: "1 · Task state",
-    copy: "Agent Runtime → CockroachDB: sessions, tasks, and events. The crash/resume cursor lives here — never only in process RAM.",
+    title: "Request the embedding",
+    copy:
+      "The runtime sends memory text to Amazon Bedrock Titan Embeddings V2 and receives a normalized 1024-dimensional vector.",
+    hot: ["runtime-a", "bedrock"],
+    dwellMs: 5200,
   },
   {
-    flow: "vector",
-    n: "03",
-    title: "2 · Vectors",
-    copy: "CockroachDB → Bedrock (embed request), then Bedrock → VECTOR memories (store). Titan Embeddings V2, searchable with <-> distance.",
+    title: "Commit the vector memory",
+    copy:
+      "The runtime stores content, metadata, provider, and VECTOR(1024) beside transactional state in CockroachDB.",
+    hot: ["runtime-a", "bedrock", "crdb"],
+    dwellMs: 5400,
   },
   {
-    flow: "mcp",
-    n: "04",
-    title: "3 · MCP inspect",
-    copy: "CockroachDB → MCP: Cursor inspects the live Cloud cluster while the demo runs — no separate ops console.",
+    title: "Recover in invocation B",
+    copy:
+      "A fresh request loads the same client-scoped session, skips committed work, recalls memory, and continues at step three.",
+    hot: ["crdb", "runtime-b"],
+    dwellMs: 5400,
   },
 ];
 
-const ARCH_COPY = {
-  all: ARCH_TOUR[0].copy,
-  state: ARCH_TOUR[1].copy,
-  vector: ARCH_TOUR[2].copy,
-  mcp: ARCH_TOUR[3].copy,
-  runtime: ARCH_TOUR[1].copy,
-  crdb: "CockroachDB is the durable brain: sessions, tasks, events, and VECTOR memories in one transactional store on AWS eu-central-1.",
-  bedrock: ARCH_TOUR[2].copy,
-  mcpNode: ARCH_TOUR[3].copy,
-};
-
-const archReduceMotion = window.matchMedia(
+const reduceMotion = window.matchMedia(
   "(prefers-reduced-motion: reduce)"
 ).matches;
-// Autoplay is ON by default; only reduced-motion users start paused.
-let archAutoplay = !archReduceMotion;
+
+let currentPhase = "ready";
+let lastRunMode = "recovery";
+let busy = false;
+let archAutoplay = !reduceMotion;
 let archTimer = null;
 let archIndex = 0;
 let archInView = false;
+let archHoverPaused = false;
+let archFocusPaused = false;
 
-let currentPhase = "ready";
-let demoEngaged = false;
-
-function setBusy(busy) {
-  for (const btn of buttons) {
-    if (busy) {
-      btn.disabled = true;
-      continue;
-    }
-    if (btn === btnResume) {
-      btn.disabled = currentPhase !== "crashed" && currentPhase !== "running";
-    } else {
-      btn.disabled = false;
-    }
+function storedSessionId() {
+  try {
+    const value = window.sessionStorage.getItem(SESSION_KEY);
+    return value && SESSION_PATTERN.test(value) ? value : null;
+  } catch {
+    return null;
   }
+}
+
+function storeSessionId(sessionId) {
+  if (!SESSION_PATTERN.test(String(sessionId || ""))) return;
+  try {
+    window.sessionStorage.setItem(SESSION_KEY, sessionId);
+  } catch {
+    // The demo still works until refresh when storage is unavailable.
+  }
+}
+
+function syncActions() {
+  if (busy) return;
+  for (const btn of buttons) btn.disabled = false;
+  btnResume.disabled = !["crashed", "running"].includes(currentPhase);
+}
+
+function setBusy(nextBusy) {
+  busy = nextBusy;
+  for (const btn of buttons) btn.disabled = nextBusy;
+  if (!nextBusy) syncActions();
 }
 
 function flashCrash() {
-  if (!fxLayer) return;
+  if (!fxLayer || reduceMotion) return;
   fxLayer.classList.remove("is-crash");
   void fxLayer.offsetWidth;
   fxLayer.classList.add("is-crash");
-  window.setTimeout(() => fxLayer.classList.remove("is-crash"), 750);
+  window.setTimeout(() => fxLayer.classList.remove("is-crash"), 650);
 }
 
-function setLive(on) {
-  demoEngaged = on;
-  document.body.classList.toggle("is-live", on);
-  demoStage?.classList.toggle("is-live", on);
-  if (missionDock) missionDock.hidden = !on;
-}
-
-function syncDock(phase) {
-  const active =
-    phase === "completed"
-      ? "resume"
-      : phase === "crashed"
-        ? "crash"
-        : phase === "running"
-          ? "write"
-          : "write";
-  const order = ["write", "crash", "resume"];
-  const activeIdx = order.indexOf(active);
-
-  for (const step of dockSteps) {
-    const idx = order.indexOf(step.dataset.dock);
-    step.classList.toggle("is-active", step.dataset.dock === active);
-    step.classList.toggle(
-      "is-done",
-      phase === "completed"
-        ? idx <= activeIdx
-        : phase === "crashed"
-          ? idx < activeIdx
-          : phase === "running"
-            ? idx === 0
-            : false
-    );
-  }
-  if (dockChip) dockChip.textContent = phase;
-}
-
-function setPhase(phase, { sessionId, engageLive = false } = {}) {
+function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
   currentPhase = phase;
-  const short = sessionId ? sessionId.slice(0, 8) : null;
+  lastRunMode = mode;
+  const shortId = sessionId ? sessionId.slice(0, 8) : null;
 
-  if (engageLive) setLive(true);
-  if (phase === "ready" && !engageLive) setLive(false);
+  document.body.dataset.phase = phase;
+  phaseBanner.dataset.phase = phase;
+  continuityCard.dataset.phase = phase;
+  phaseChip.textContent = phase;
+  btnResume.classList.toggle("is-pulse", phase === "crashed");
 
-  // Hero ribbon / chip stay on landing "ready" until the user actually runs a demo.
-  // Status hydrate still updates proof + buttons from DB without flipping the hero.
-  const heroPhase = engageLive || phase === "ready" ? phase : "ready";
-  document.body.dataset.phase = engageLive ? phase : heroPhase;
-  if (demoStage) demoStage.dataset.phase = engageLive ? phase : heroPhase;
-  if (heroVisual) heroVisual.dataset.phase = heroPhase;
-  if (phaseChip) phaseChip.textContent = heroPhase;
-  if (phaseBanner) phaseBanner.dataset.phase = phase;
-  syncDock(engageLive ? phase : "ready");
-
-  for (const step of journeySteps) {
-    const target = step.dataset.phase;
-    const visualPhase = engageLive ? phase : "ready";
-    step.classList.toggle("is-active", target === visualPhase);
-    step.classList.toggle(
-      "is-done",
-      engageLive &&
-        ((phase === "crashed" && target === "ready") ||
-          (phase === "completed" &&
-            (target === "ready" || target === "crashed")) ||
-          (phase === "running" && target === "ready"))
-    );
-  }
-
-  if (phase === "crashed") {
-    phaseText.textContent = short
-      ? `Agent crashed after step 2 · session ${short} still lives in CockroachDB.`
-      : "Agent crashed mid-mission. Memory is durable — hit Resume.";
-    hintEl.innerHTML = demoEngaged
-      ? "Process is dead. Press <strong>Resume from memory</strong> to continue from the next pending step."
-      : "A crashed session is waiting in CockroachDB. Press <strong>Crash after step 2</strong> for a fresh proof, or <strong>Resume</strong>.";
-    btnResume.disabled = false;
-    btnCrash.classList.remove("is-pulse");
-    if (demoEngaged) btnResume.classList.add("is-pulse");
+  if (phase === "running") {
+    phaseText.textContent =
+      "Invocation A is writing checkpoints and vector memory.";
+    runtimeAState.textContent = "running";
+    runtimeBState.textContent = "standby";
+    checkpointState.textContent = "writing";
+    handoffState.textContent = "pending";
+    hintEl.innerHTML =
+      "<span>Running</span> Durable writes are in flight. The proof will stop after step 02.";
+  } else if (phase === "crashed") {
+    phaseText.textContent = shortId
+      ? `Invocation A stopped · step 02 committed · ${shortId}`
+      : "Invocation A stopped after committed step 02.";
+    runtimeAState.textContent = "stopped after 02";
+    runtimeBState.textContent = "ready to recover";
+    checkpointState.textContent = "step 02 / 04";
+    handoffState.textContent = "available";
+    hintEl.innerHTML =
+      "<span>Next</span> Start invocation B. It will load this exact session and continue at step 03.";
+  } else if (phase === "completed" && mode === "full") {
+    phaseText.textContent = shortId
+      ? `Single invocation completed all four steps · ${shortId}`
+      : "Single invocation completed all four steps.";
+    runtimeAState.textContent = "completed 04 / 04";
+    runtimeBState.textContent = "not used";
+    checkpointState.textContent = "step 04 / 04";
+    handoffState.textContent = "not required";
+    hintEl.innerHTML =
+      "<span>Complete</span> Run the crash proof next to demonstrate the recovery boundary.";
   } else if (phase === "completed") {
-    phaseText.textContent = short
-      ? `Mission completed from durable memory · ${short}`
-      : "Mission completed from durable memory.";
+    phaseText.textContent = shortId
+      ? `Invocation B resumed at step 03 and completed · ${shortId}`
+      : "Invocation B resumed from durable memory and completed.";
+    runtimeAState.textContent = "stopped after 02";
+    runtimeBState.textContent = "recovered · complete";
+    checkpointState.textContent = "step 04 / 04";
+    handoffState.textContent = "complete";
     hintEl.innerHTML =
-      "Done. Press <strong>Crash after step 2</strong> anytime to replay the jury path.";
-    btnResume.disabled = true;
-    btnResume.classList.remove("is-pulse");
-  } else if (phase === "running") {
-    phaseText.textContent = "Mission running… writing steps into CockroachDB.";
-    hintEl.textContent = "Hang tight — durable writes are in flight.";
-    btnResume.disabled = false;
+      "<span>Verified</span> Invocation B skipped committed work and finished the same mission.";
   } else {
-    phaseText.textContent = "Waiting for a mission.";
+    phaseText.textContent = "Ready to create a client-scoped mission.";
+    runtimeAState.textContent = "waiting";
+    runtimeBState.textContent = "standby";
+    checkpointState.textContent = "not started";
+    handoffState.textContent = "not required";
     hintEl.innerHTML =
-      "Start with <strong>Crash after step 2</strong> — then resume from CockroachDB without re-briefing the agent.";
-    btnResume.disabled = true;
-    btnResume.classList.remove("is-pulse");
+      "<span>Jury path</span> Crash first, then resume the same client-scoped session.";
   }
+
+  syncActions();
 }
 
 function taskDetail(task) {
@@ -202,43 +185,61 @@ function taskDetail(task) {
   if (result.summary) return result.summary;
   if (result.note) return result.note;
   if (Array.isArray(result.actions)) return result.actions.join(" · ");
-  if (Array.isArray(result.remembered) && result.remembered.length) {
-    return `recalled ${result.remembered.length} memories`;
+  if (Array.isArray(result.remembered)) {
+    return result.remembered.length
+      ? `recalled ${result.remembered.length} prior memories`
+      : "no prior memory required";
   }
   return "";
 }
 
-function renderStats(counts = {}) {
-  document.getElementById("stat-sessions").textContent = counts.sessions ?? "—";
-  document.getElementById("stat-tasks").textContent = counts.tasks ?? "—";
-  document.getElementById("stat-memories").textContent = counts.memories ?? "—";
-  document.getElementById("stat-events").textContent = counts.events ?? "—";
+function renderStats(counts = {}, memories = []) {
+  const completed = Number(counts.completed || 0);
+  const total = Number(counts.tasks || 0);
+  document.getElementById("stat-completed").textContent =
+    `${completed}/${total}`;
+  document.getElementById("stat-memories").textContent =
+    String(counts.memories || 0);
+  document.getElementById("stat-events").textContent =
+    String(counts.events || 0);
+
+  const providers = new Set(
+    memories
+      .map((memory) => memory.metadata?.embed_provider)
+      .filter(Boolean)
+  );
+  const provider = providers.has("bedrock")
+    ? "Bedrock"
+    : providers.has("local")
+      ? "Local"
+      : "—";
+  document.getElementById("stat-provider").textContent = provider;
 }
 
 function renderTimeline(session, tasks = []) {
   if (!session) {
-    sessionMeta.textContent = "idle";
+    sessionMeta.textContent = "no client session";
     timelineEl.innerHTML =
-      '<li class="empty">Run a mission to populate durable steps.</li>';
+      '<li class="empty">Run the crash proof to create durable steps.</li>';
     return;
   }
 
-  sessionMeta.textContent = `${session.status} · ${session.id.slice(0, 8)}`;
-
+  sessionMeta.textContent =
+    `client session ${session.id} · ${session.status}`;
   const firstPending = tasks.find(
-    (t) => t.status === "pending" || t.status === "in_progress"
+    (task) => task.status === "pending" || task.status === "in_progress"
   );
 
   timelineEl.innerHTML = tasks
-    .map((t) => {
-      const detail = taskDetail(t);
+    .map((task) => {
+      const detail = taskDetail(task);
       const isBreak =
         session.status === "crashed" &&
-        Number(t.step_index) === 2 &&
-        t.status === "completed";
-      const isNext = firstPending && t.id === firstPending.id;
+        Number(task.step_index) === 2 &&
+        task.status === "completed";
+      const isNext = Boolean(firstPending && task.id === firstPending.id);
       const classes = [
-        escapeHtml(t.status),
+        escapeHtml(task.status),
         isBreak ? "is-break" : "",
         isNext ? "is-next" : "",
       ]
@@ -246,18 +247,14 @@ function renderTimeline(session, tasks = []) {
         .join(" ");
 
       return `
-      <li class="${classes}">
-        <div class="step">step ${escapeHtml(String(t.step_index))}</div>
-        <div>
-          <div class="goal">${escapeHtml(t.goal)}</div>
-          ${
-            detail
-              ? `<div class="detail">${escapeHtml(detail)}</div>`
-              : ""
-          }
-          <div class="status">${escapeHtml(t.status)}</div>
-        </div>
-      </li>`;
+        <li class="${classes}">
+          <div class="step">step ${escapeHtml(task.step_index)}</div>
+          <div>
+            <div class="goal">${escapeHtml(task.goal)}</div>
+            ${detail ? `<div class="detail">${escapeHtml(detail)}</div>` : ""}
+            <div class="status">${escapeHtml(task.status)}</div>
+          </div>
+        </li>`;
     })
     .join("");
 }
@@ -265,30 +262,44 @@ function renderTimeline(session, tasks = []) {
 function renderRecall(memories = []) {
   if (!memories.length) {
     recallEl.innerHTML =
-      '<li class="empty">Memories appear here after the agent writes embeddings.</li>';
+      '<li class="empty">Vector memories appear after the agent writes them.</li>';
     return;
   }
+
   const seen = new Set();
-  const unique = [];
-  for (const m of memories) {
-    const key = String(m.content || "").trim();
-    if (!key || seen.has(key)) continue;
+  const unique = memories.filter((memory) => {
+    const key = String(memory.content || "").trim();
+    if (!key || seen.has(key)) return false;
     seen.add(key);
-    unique.push(m);
-  }
-  const list = unique.length ? unique : memories.slice(0, 1);
-  recallEl.innerHTML = list
-    .map((m) => {
-      const dist =
-        m.distance === undefined || m.distance === null
+    return true;
+  });
+
+  recallEl.innerHTML = unique
+    .map((memory) => {
+      const provider = String(
+        memory.metadata?.embed_provider || "unknown"
+      ).toLowerCase();
+      const distance =
+        memory.distance === undefined || memory.distance === null
           ? ""
-          : ` · d=${Number(m.distance).toFixed(3)}`;
-      const provider = m.metadata?.embed_provider
-        ? ` · ${m.metadata.embed_provider}`
-        : "";
-      return `<li>${escapeHtml(m.content)}${escapeHtml(dist)}${escapeHtml(
-        provider
-      )}</li>`;
+          : `d=${Number(memory.distance).toFixed(3)}`;
+      return `
+        <li>
+          <div class="memory-topline">
+            <span class="memory-kind">${escapeHtml(memory.kind || "memory")}</span>
+            <span class="memory-meta">
+              <span class="memory-provider ${
+                provider === "bedrock" ? "is-bedrock" : ""
+              }">${escapeHtml(provider)}</span>
+              ${
+                distance
+                  ? `<span class="memory-distance">${escapeHtml(distance)}</span>`
+                  : ""
+              }
+            </span>
+          </div>
+          <p>${escapeHtml(memory.content)}</p>
+        </li>`;
     })
     .join("");
 }
@@ -298,193 +309,243 @@ function escapeHtml(value) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 function applyPayload(data, action) {
+  if (data.session?.id) storeSessionId(data.session.id);
   if (data.log) logEl.textContent = data.log;
-  renderStats(data.counts || {});
+  renderStats(data.counts || {}, data.memories || []);
   renderTimeline(data.session, data.tasks || []);
   renderRecall(data.memories || []);
 
-  const engageLive = action === "crash" || action === "resume" || action === "full";
   const status = data.session?.status || "ready";
-  if (action === "crash" || status === "crashed") {
-    setPhase("crashed", { sessionId: data.session?.id, engageLive });
+  const mode = action === "full" ? "full" : lastRunMode;
+  if (status === "crashed") {
+    setPhase("crashed", { sessionId: data.session?.id, mode: "recovery" });
   } else if (status === "completed") {
-    setPhase("completed", { sessionId: data.session?.id, engageLive });
-  } else if (status === "running") {
-    setPhase("running", { sessionId: data.session?.id, engageLive });
-  } else if (!data.session) {
-    setPhase("ready");
+    setPhase("completed", { sessionId: data.session?.id, mode });
+  } else if (status === "running" || status === "paused") {
+    setPhase("running", { sessionId: data.session?.id, mode });
   } else {
-    setPhase(status === "paused" ? "running" : "ready", {
-      sessionId: data.session?.id,
-      engageLive,
-    });
+    setPhase("ready");
   }
 }
 
 async function call(action) {
+  const previousPhase = currentPhase;
+  const startsFresh = action === "crash" || action === "full";
+  const sessionId = startsFresh ? null : storedSessionId();
+  const headers = {};
+  if (sessionId) headers["X-Continuum-Session"] = sessionId;
+
   setBusy(true);
   logEl.textContent = `Running ${action}…`;
-  if (action === "crash" || action === "resume" || action === "full") {
-    setPhase("running", { engageLive: true });
+
+  if (["crash", "resume", "full"].includes(action)) {
+    lastRunMode = action === "full" ? "full" : "recovery";
+    setPhase("running", { mode: lastRunMode });
+    document.getElementById("proof").scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
   }
+
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 90_000);
   try {
-    const res = await fetch(`/api/${action}`, {
+    const response = await fetch(`/api/${action}`, {
       method: "POST",
+      headers,
       signal: controller.signal,
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || res.statusText);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || response.statusText);
     applyPayload(data, action);
     if (action === "crash") flashCrash();
-  } catch (err) {
+  } catch (error) {
     const message =
-      err.name === "AbortError"
+      error.name === "AbortError"
         ? "Request timed out. Try again."
-        : String(err.message || err);
+        : String(error.message || error);
     logEl.textContent = message;
-    if (currentPhase === "running" && !demoEngaged) setPhase("ready");
+    setPhase(previousPhase, {
+      sessionId: storedSessionId(),
+      mode: lastRunMode,
+    });
   } finally {
     window.clearTimeout(timeout);
     setBusy(false);
   }
 }
 
-function setArchFlow(flow, { fromTour = false } = {}) {
-  if (!archSvg) return;
+function archTourBlocked() {
+  return archHoverPaused || archFocusPaused;
+}
 
-  // Retrigger CSS draw animations for the selected path
-  archSvg.dataset.flow = "";
+function clearArchTimer() {
+  if (!archTimer) return;
+  window.clearTimeout(archTimer);
+  archTimer = null;
+}
+
+function syncArchPause() {
+  archStory.classList.toggle(
+    "is-paused",
+    archAutoplay && archTourBlocked()
+  );
+}
+
+function restartArchProgress(dwellMs) {
+  archStory.classList.remove("is-playing");
+  archProgressBar.style.animationDuration = "";
+  void archProgressBar.offsetWidth;
+  if (!archAutoplay || reduceMotion) return;
+  archProgressBar.style.animationDuration = `${dwellMs}ms`;
+  archStory.classList.add("is-playing");
+  syncArchPause();
+}
+
+function setArchStep(index) {
+  const normalized =
+    ((index % ARCH_STEPS.length) + ARCH_STEPS.length) % ARCH_STEPS.length;
+  const step = ARCH_STEPS[normalized];
+  archIndex = normalized;
+
+  archSvg.dataset.step = "";
   void archSvg.getBoundingClientRect();
-  archSvg.dataset.flow = flow;
+  archSvg.dataset.step = String(normalized);
 
-  for (const tab of archTabs) {
-    tab.classList.toggle("is-on", tab.dataset.flow === flow);
+  for (const button of archStepBtns) {
+    const active = Number(button.dataset.step) === normalized;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-selected", active ? "true" : "false");
+    button.tabIndex = active ? 0 : -1;
   }
 
-  const step = ARCH_TOUR.find((s) => s.flow === flow) || ARCH_TOUR[0];
-  if (!fromTour) {
-    archIndex = Math.max(0, ARCH_TOUR.findIndex((s) => s.flow === flow));
-  }
-  if (archStageN) archStageN.textContent = step.n;
-  if (archStageTitle) archStageTitle.textContent = step.title;
-  if (archCaption) archCaption.textContent = step.copy;
+  archKicker.textContent =
+    `Step ${String(normalized + 1).padStart(2, "0")} of 04`;
+  archStageTitle.textContent = step.title;
+  archCaption.textContent = step.copy;
+  archPanel.setAttribute("aria-labelledby", `arch-tab-${normalized}`);
 
-  const hotMap = {
-    all: null,
-    state: "runtime",
-    vector: "bedrock",
-    mcp: "mcp",
-  };
-  const hotName = hotMap[flow];
   for (const node of archNodes) {
-    node.classList.toggle(
-      "is-hot",
-      hotName
-        ? node.dataset.node === hotName || node.dataset.node === "crdb"
-        : false
-    );
+    if (node.dataset.plane === "inspection") continue;
+    const hot = step.hot.includes(node.dataset.node);
+    node.classList.toggle("is-hot", hot);
+    node.classList.toggle("is-dim", !hot);
   }
 }
 
 function stopArchTour() {
-  if (archTimer) {
-    window.clearInterval(archTimer);
-    archTimer = null;
-  }
+  clearArchTimer();
+  archStory.classList.remove("is-playing", "is-paused");
 }
 
-function startArchTour() {
-  stopArchTour();
-  if (!archAutoplay || !archInView) return;
-  // Full path draw needs ~3.3s; give each step room to finish
-  archTimer = window.setInterval(() => {
-    archIndex = (archIndex + 1) % ARCH_TOUR.length;
-    setArchFlow(ARCH_TOUR[archIndex].flow, { fromTour: true });
-  }, 4200);
+function scheduleArchTour() {
+  clearArchTimer();
+  if (!archAutoplay || !archInView || archTourBlocked()) return;
+  const dwell = ARCH_STEPS[archIndex].dwellMs;
+  restartArchProgress(dwell);
+  archTimer = window.setTimeout(() => {
+    setArchStep(archIndex + 1);
+    scheduleArchTour();
+  }, dwell);
 }
 
-function setArchAutoplay(on) {
-  archAutoplay = on;
-  archPlay?.classList.toggle("is-playing", on);
-  archPlay?.setAttribute("aria-pressed", on ? "true" : "false");
-  if (archPlay) archPlay.textContent = on ? "Auto on" : "Auto";
-  if (on) {
-    setArchFlow(ARCH_TOUR[archIndex].flow, { fromTour: true });
-    startArchTour();
-  } else {
+function setArchAutoplay(nextAutoplay) {
+  archAutoplay = Boolean(nextAutoplay) && !reduceMotion;
+  if (archAutoplay) scheduleArchTour();
+  else stopArchTour();
+}
+
+function setArchPaused(kind, paused) {
+  if (kind === "hover") archHoverPaused = paused;
+  if (kind === "focus") archFocusPaused = paused;
+  syncArchPause();
+  if (archTourBlocked()) clearArchTimer();
+  else scheduleArchTour();
+}
+
+function measureArchInView() {
+  const rect = archSection.getBoundingClientRect();
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+  const visible =
+    Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+  return visible >= Math.min(240, viewportHeight * 0.24);
+}
+
+function onArchVisibility(inView) {
+  const entered = inView && !archInView;
+  archInView = inView;
+  if (!inView) {
     stopArchTour();
+    return;
   }
+  if (entered) {
+    archAutoplay = !reduceMotion;
+    setArchStep(0);
+  }
+  scheduleArchTour();
 }
 
-function focusArchNode(nodeName) {
-  setArchAutoplay(false);
-  const map = {
-    runtime: "state",
-    crdb: "all",
-    bedrock: "vector",
-    mcp: "mcp",
-  };
-  const flow = map[nodeName] || "all";
-  setArchFlow(flow);
-  if (nodeName === "crdb" && archCaption) {
-    archCaption.textContent = ARCH_COPY.crdb;
-  }
-  for (const node of archNodes) {
-    node.classList.toggle("is-hot", node.dataset.node === nodeName);
-  }
+for (const button of buttons) {
+  button.addEventListener("click", () => call(button.dataset.action));
 }
 
-for (const btn of buttons) {
-  btn.addEventListener("click", () => call(btn.dataset.action));
-}
-
-for (const tab of archTabs) {
-  tab.addEventListener("click", () => {
+for (const button of archStepBtns) {
+  button.addEventListener("click", () => {
     setArchAutoplay(false);
-    setArchFlow(tab.dataset.flow);
+    setArchStep(Number(button.dataset.step));
   });
-}
-
-archPlay?.addEventListener("click", () => setArchAutoplay(!archAutoplay));
-
-for (const node of archNodes) {
-  node.addEventListener("click", () => focusArchNode(node.dataset.node));
-  node.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter" || ev.key === " ") {
-      ev.preventDefault();
-      focusArchNode(node.dataset.node);
+  button.addEventListener("keydown", (event) => {
+    let next = null;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (archIndex + 1) % ARCH_STEPS.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = (archIndex - 1 + ARCH_STEPS.length) % ARCH_STEPS.length;
+    } else if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = ARCH_STEPS.length - 1;
     }
+    if (next === null) return;
+    event.preventDefault();
+    setArchAutoplay(false);
+    setArchStep(next);
+    archStepBtns[next].focus();
   });
 }
 
-if (archSection && "IntersectionObserver" in window) {
-  const io = new IntersectionObserver(
-    (entries) => {
-      archInView = entries.some(
-        (e) => e.isIntersecting && e.intersectionRatio > 0.25
-      );
-      if (archInView && archAutoplay) startArchTour();
-      else stopArchTour();
-      // Play draw once when section first enters view
-      if (archInView && !archSvg?.dataset.seen) {
-        if (archSvg) archSvg.dataset.seen = "1";
-        setArchFlow(archSvg?.dataset.flow || "all");
-      }
-    },
-    { threshold: [0.25, 0.5] }
+archFigure.addEventListener("mouseenter", () =>
+  setArchPaused("hover", true)
+);
+archFigure.addEventListener("mouseleave", () =>
+  setArchPaused("hover", false)
+);
+archFigure.addEventListener("focusin", () => setArchPaused("focus", true));
+archFigure.addEventListener("focusout", (event) => {
+  if (!archFigure.contains(event.relatedTarget)) {
+    setArchPaused("focus", false);
+  }
+});
+
+if ("IntersectionObserver" in window) {
+  const observer = new IntersectionObserver(
+    () => onArchVisibility(measureArchInView()),
+    { threshold: [0, 0.1, 0.2, 0.35] }
   );
-  io.observe(archSection);
+  observer.observe(archSection);
+} else {
+  window.addEventListener(
+    "scroll",
+    () => onArchVisibility(measureArchInView()),
+    { passive: true }
+  );
 }
 
-setArchFlow("all");
-// Keep Autoplay ON by default. Reduced-motion users get static paths, no tour.
-setArchAutoplay(!archReduceMotion);
-if (archReduceMotion) stopArchTour();
+setArchStep(0);
 setPhase("ready");
 call("status");

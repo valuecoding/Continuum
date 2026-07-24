@@ -173,7 +173,7 @@ try {
         await page.evaluate(() =>
           window.scrollTo({ top: 0, behavior: "smooth" })
         );
-        await focusSelector(page, ".hero .brand");
+        await focusSelector(page, ".hero .eyebrow");
       });
     } else if (scene.id === "problem") {
       await playScene(page, scene.id, durations, async () => {

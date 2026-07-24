@@ -7,28 +7,40 @@
       http-equiv="Content-Security-Policy"
       content="upgrade-insecure-requests"
     />
-    <title>Continuum — Agentic Memory</title>
+    <title>Continuum — Crash-resilient agentic memory</title>
     <meta
       name="description"
-      content="Crash-proof agentic memory on CockroachDB + Amazon Bedrock. Crash mid-mission, resume from durable task state and vector memory."
+      content="Stop an agent runtime after step two and resume the mission from durable task state, events, and vector memory in CockroachDB."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="canonical" href="https://continuum.vortex-digital.de/" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://continuum.vortex-digital.de/" />
-    <meta property="og:title" content="Continuum — Agents that remember after they die" />
+    <meta
+      property="og:title"
+      content="Continuum — The runtime stops. The mission continues."
+    />
     <meta
       property="og:description"
-      content="Durable task state and semantic memory in CockroachDB. Crash the agent mid-mission — resume from the exact step."
+      content="A live crash-and-resume proof backed by CockroachDB and Amazon Bedrock."
     />
-    <meta property="og:image" content="https://continuum.vortex-digital.de/og.png" />
+    <meta
+      property="og:image"
+      content="https://continuum.vortex-digital.de/og.png"
+    />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Continuum — Agentic Memory" />
+    <meta
+      name="twitter:title"
+      content="Continuum — Crash-resilient agentic memory"
+    />
     <meta
       name="twitter:description"
-      content="Crash-proof agent memory on CockroachDB × AWS Bedrock."
+      content="Durable task state and semantic memory on CockroachDB × AWS."
     />
-    <meta name="twitter:image" content="https://continuum.vortex-digital.de/og.png" />
+    <meta
+      name="twitter:image"
+      content="https://continuum.vortex-digital.de/og.png"
+    />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -38,326 +50,700 @@
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body data-phase="ready">
+    <a class="skip-link" href="#proof">Skip to the live proof</a>
     <div class="atmosphere" aria-hidden="true"></div>
     <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
 
     <header class="top">
       <div class="top-inner">
-        <a class="mark" href="#top">CONTINUUM</a>
+        <a class="mark" href="#top" aria-label="Continuum home">
+          <span class="mark-symbol" aria-hidden="true"></span>
+          <span>CONTINUUM</span>
+        </a>
         <div class="top-actions">
-          <nav class="nav" id="nav-links">
-            <a href="#proof">Proof</a>
-            <a href="#architecture">Architecture</a>
+          <nav class="nav" aria-label="Primary navigation">
+            <a href="#proof">Live proof</a>
+            <a href="#architecture">System</a>
+            <a href="#readiness">Readiness</a>
           </nav>
-          <div class="mission-dock" id="mission-dock" hidden>
-            <ol class="dock-steps" aria-label="Mission path">
-              <li class="dock-step" data-dock="write"><span>Write</span></li>
-              <li class="dock-step" data-dock="crash"><span>Crash</span></li>
-              <li class="dock-step" data-dock="resume"><span>Resume</span></li>
-            </ol>
-            <span class="dock-chip" id="dock-chip">ready</span>
-          </div>
+          <span class="system-pill">
+            <span aria-hidden="true"></span>
+            Live on AWS
+          </span>
         </div>
       </div>
     </header>
 
     <main id="top">
-      <section class="demo-stage" id="demo-stage" data-phase="ready">
-        <div class="hero">
+      <section class="hero">
+        <div class="hero-grid">
           <div class="hero-copy">
-            <p class="brand">CONTINUUM</p>
-            <h1>Agents that remember after they die.</h1>
-            <p class="sub">
-              Durable task state and semantic memory in CockroachDB. Crash the
-              agent mid-mission — resume from the exact step, with Bedrock
-              embeddings still searchable.
+            <p class="eyebrow">Crash-resilient agentic memory</p>
+            <h1>
+              The runtime stops.
+              <em>The mission continues.</em>
+            </h1>
+            <p class="hero-sub">
+              Continuum checkpoints task state, events, and semantic memory in
+              CockroachDB. Stop the runtime after step two. Resume in a fresh
+              request — without re-briefing the agent.
             </p>
 
-            <ol class="journey" id="journey" aria-label="Demo journey">
-              <li class="journey-step is-active" data-phase="ready">
-                <span class="journey-n">01</span>
-                <span class="journey-label">Crash mid-mission</span>
-              </li>
-              <li class="journey-step" data-phase="crashed">
-                <span class="journey-n">02</span>
-                <span class="journey-label">Memory survives</span>
-              </li>
-              <li class="journey-step" data-phase="completed">
-                <span class="journey-n">03</span>
-                <span class="journey-label">Resume & finish</span>
-              </li>
-            </ol>
-
             <div class="cta" id="cta-anchor">
-              <button type="button" class="btn danger" id="btn-crash" data-action="crash">
-                Crash after step 2
+              <button
+                type="button"
+                class="btn btn-crash"
+                id="btn-crash"
+                data-action="crash"
+                aria-describedby="hint"
+              >
+                <span>Run the crash proof</span>
+                <small>Stops after step 02</small>
               </button>
               <button
                 type="button"
-                class="btn primary"
+                class="btn btn-resume"
                 id="btn-resume"
                 data-action="resume"
                 disabled
               >
-                Resume from memory
+                <span>Resume from memory</span>
+                <small>Starts invocation B</small>
               </button>
-              <button type="button" class="btn ghost" id="btn-full" data-action="full">
-                Full mission
+              <button
+                type="button"
+                class="btn-text"
+                id="btn-full"
+                data-action="full"
+              >
+                Run uninterrupted instead
               </button>
             </div>
+
             <p class="hint" id="hint">
-              Start with <strong>Crash after step 2</strong> — then resume from
-              CockroachDB without re-briefing the agent.
+              <span>Jury path</span>
+              Crash first, then resume the same client-scoped session.
             </p>
+
+            <ul class="hero-facts" aria-label="Technology summary">
+              <li>CockroachDB VECTOR(1024)</li>
+              <li>Amazon Bedrock Titan V2</li>
+              <li>Cloudflare Hyperdrive</li>
+            </ul>
           </div>
 
-          <div class="hero-visual" aria-hidden="true" data-phase="ready">
-            <svg class="ribbon" viewBox="0 0 640 360" fill="none" role="presentation">
-              <defs>
-                <linearGradient id="mem" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#0f766e" />
-                  <stop offset="55%" stop-color="#115e59" />
-                  <stop offset="100%" stop-color="#0e7490" />
-                </linearGradient>
-                <filter id="soft">
-                  <feGaussianBlur stdDeviation="18" />
-                </filter>
-              </defs>
-              <ellipse cx="320" cy="170" rx="220" ry="100" fill="#0f766e" opacity="0.12" filter="url(#soft)" />
-              <path
-                class="ribbon-path"
-                d="M56 248 C 150 100, 230 300, 320 180 S 470 55, 584 148"
-                stroke="url(#mem)"
-                stroke-width="10"
-                stroke-linecap="round"
-              />
-              <g class="ribbon-marks">
-                <circle class="pulse p1" cx="137" cy="195" r="11" fill="#0f766e" />
-                <circle class="pulse p2" cx="320" cy="180" r="12" fill="#134e4a" />
-                <circle class="pulse p3" cx="455" cy="95" r="11" fill="#0e7490" />
-                <text x="137" y="290" text-anchor="middle" class="annot">write</text>
-                <text x="320" y="290" text-anchor="middle" class="annot">crash</text>
-                <text x="455" y="290" text-anchor="middle" class="annot">resume</text>
-              </g>
-            </svg>
-            <div class="phase-chip" id="phase-chip">ready</div>
+          <div
+            class="continuity-card"
+            id="continuity-card"
+            data-phase="ready"
+            aria-label="Runtime handoff visualization"
+          >
+            <div class="continuity-head">
+              <div>
+                <p>Recovery contract</p>
+                <strong>State outlives compute</strong>
+              </div>
+              <span class="phase-chip" id="phase-chip">ready</span>
+            </div>
+
+            <div class="handoff-map" aria-hidden="true">
+              <div class="runtime-card runtime-a">
+                <span>Invocation A</span>
+                <strong>Agent runtime</strong>
+                <small id="runtime-a-state">waiting</small>
+              </div>
+              <div class="handoff-arrow arrow-write">
+                <span>commit</span>
+                <i></i>
+              </div>
+              <div class="memory-core">
+                <span>CockroachDB</span>
+                <strong>Durable memory</strong>
+                <ul>
+                  <li>task cursor</li>
+                  <li>event log</li>
+                  <li>vectors</li>
+                </ul>
+              </div>
+              <div class="handoff-arrow arrow-read">
+                <span>recover</span>
+                <i></i>
+              </div>
+              <div class="runtime-card runtime-b">
+                <span>Invocation B</span>
+                <strong>Agent runtime</strong>
+                <small id="runtime-b-state">standby</small>
+              </div>
+            </div>
+
+            <div class="checkpoint-ledger">
+              <div>
+                <span>Committed cursor</span>
+                <strong id="checkpoint-state">not started</strong>
+              </div>
+              <div>
+                <span>Recovery source</span>
+                <strong>CockroachDB</strong>
+              </div>
+              <div>
+                <span>Handoff</span>
+                <strong id="handoff-state">not required</strong>
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <section class="proof" id="proof">
-          <div class="section-head proof-head">
-            <h2>Live proof</h2>
-            <p>Every step cursor and memory hit below is read from CockroachDB.</p>
+      <section class="proof section-shell" id="proof">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Live CockroachDB reads</p>
+            <h2>One click. Two invocations. One durable cursor.</h2>
           </div>
+          <p>
+            This is not a pre-rendered timeline. Every task, event count, and
+            recalled memory below comes back from the active CockroachDB session.
+          </p>
+        </div>
 
-          <div class="phase-banner" id="phase-banner" data-phase="ready">
-            <span class="phase-dot"></span>
-            <span id="phase-text">Waiting for a mission.</span>
+        <div class="proof-console">
+          <div class="console-topline">
+            <div
+              class="phase-banner"
+              id="phase-banner"
+              data-phase="ready"
+              role="status"
+              aria-live="polite"
+            >
+              <span class="phase-dot" aria-hidden="true"></span>
+              <span id="phase-text">Ready to create a mission.</span>
+            </div>
+            <span id="session-meta" class="session-meta">no client session</span>
           </div>
 
           <div class="proof-grid">
-            <div class="timeline-panel" role="region" aria-label="Mission timeline">
+            <div
+              class="timeline-panel panel"
+              role="region"
+              aria-label="Mission checkpoint timeline"
+            >
               <div class="panel-label">
-                <span>Mission timeline</span>
-                <span id="session-meta" class="meta">idle</span>
+                <span>Durable task cursor</span>
+                <span>agent_tasks</span>
               </div>
               <ol id="timeline" class="timeline">
-                <li class="empty">Run a mission to populate durable steps.</li>
+                <li class="empty">Run the crash proof to create durable steps.</li>
               </ol>
             </div>
 
             <div class="side-stack">
-              <div class="stat-row" id="stats">
-                <div><strong id="stat-sessions">—</strong><span>sessions</span></div>
-                <div><strong id="stat-tasks">—</strong><span>tasks</span></div>
-                <div><strong id="stat-memories">—</strong><span>memories</span></div>
-                <div><strong id="stat-events">—</strong><span>events</span></div>
-              </div>
-
-              <div class="recall-panel" role="region" aria-label="Semantic recall">
+              <div class="evidence-panel panel">
                 <div class="panel-label">
-                  <span>Semantic recall</span>
-                  <button type="button" class="linkish" id="btn-status" data-action="status">
+                  <span>Session evidence</span>
+                  <button
+                    type="button"
+                    class="linkish"
+                    id="btn-status"
+                    data-action="status"
+                  >
                     Refresh
                   </button>
                 </div>
+                <div class="evidence-grid" id="stats">
+                  <div>
+                    <strong id="stat-completed">0/0</strong>
+                    <span>steps committed</span>
+                  </div>
+                  <div>
+                    <strong id="stat-memories">0</strong>
+                    <span>memory rows</span>
+                  </div>
+                  <div>
+                    <strong id="stat-events">0</strong>
+                    <span>event rows</span>
+                  </div>
+                  <div>
+                    <strong id="stat-provider">—</strong>
+                    <span>embedding</span>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="recall-panel panel"
+                role="region"
+                aria-label="Semantic memory recall"
+              >
+                <div class="panel-label">
+                  <span>Semantic recall</span>
+                  <span>agent_memories</span>
+                </div>
                 <ul id="recall" class="recall">
-                  <li class="empty">Memories appear here after the agent writes embeddings.</li>
+                  <li class="empty">
+                    Vector memories appear after the agent writes them.
+                  </li>
                 </ul>
               </div>
 
-              <pre id="log" class="log" aria-live="polite">Ready. Crash → Resume is the jury path.</pre>
+              <pre id="log" class="log" aria-live="polite">Ready. The crash → resume path uses a fresh runtime request.</pre>
             </div>
           </div>
-        </section>
+        </div>
       </section>
 
-      <section class="architecture" id="architecture">
-        <div class="section-head">
-          <h2>Architecture</h2>
+      <section class="architecture section-shell" id="architecture">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">System design</p>
+            <h2>The recovery path, without hand-waving.</h2>
+          </div>
           <p>
-            Real data path through Continuum. Pick a focus — or turn Auto on to
-            walk the sequence.
+            The runtime orchestrates Bedrock and CockroachDB. MCP is a separate
+            inspection plane — useful to the developer agent, never presented as
+            part of the production data path.
           </p>
         </div>
 
-        <div class="arch-shell">
-          <div class="arch-tourbar">
-            <div class="arch-controls" role="tablist" aria-label="Architecture focus">
-              <button type="button" class="arch-tab is-on" data-flow="all">Full path</button>
-              <button type="button" class="arch-tab" data-flow="state">1 · Task state</button>
-              <button type="button" class="arch-tab" data-flow="vector">2 · Vectors</button>
-              <button type="button" class="arch-tab" data-flow="mcp">3 · MCP inspect</button>
-            </div>
-            <button type="button" class="arch-play" id="arch-play" aria-pressed="false">
-              Auto
-            </button>
-          </div>
+        <div class="arch-story" id="arch-story">
+          <ol
+            class="arch-steps"
+            id="arch-steps"
+            role="tablist"
+            aria-label="Recovery data path"
+          >
+            <li role="presentation">
+              <button
+                type="button"
+                class="arch-step is-active"
+                role="tab"
+                id="arch-tab-0"
+                data-step="0"
+                aria-selected="true"
+                aria-controls="arch-panel"
+              >
+                <span>01</span>
+                Checkpoint
+              </button>
+            </li>
+            <li role="presentation">
+              <button
+                type="button"
+                class="arch-step"
+                role="tab"
+                id="arch-tab-1"
+                data-step="1"
+                aria-selected="false"
+                aria-controls="arch-panel"
+                tabindex="-1"
+              >
+                <span>02</span>
+                Embed
+              </button>
+            </li>
+            <li role="presentation">
+              <button
+                type="button"
+                class="arch-step"
+                role="tab"
+                id="arch-tab-2"
+                data-step="2"
+                aria-selected="false"
+                aria-controls="arch-panel"
+                tabindex="-1"
+              >
+                <span>03</span>
+                Commit vector
+              </button>
+            </li>
+            <li role="presentation">
+              <button
+                type="button"
+                class="arch-step"
+                role="tab"
+                id="arch-tab-3"
+                data-step="3"
+                aria-selected="false"
+                aria-controls="arch-panel"
+                tabindex="-1"
+              >
+                <span>04</span>
+                Recover
+              </button>
+            </li>
+          </ol>
 
-          <div class="arch-stage" id="arch-stage" aria-live="polite">
-            <span class="arch-stage-n" id="arch-stage-n">01</span>
-            <div>
-              <strong id="arch-stage-title">Full path</strong>
-              <p id="arch-caption">
-                Runtime writes durable state into CockroachDB, asks Bedrock for
-                embeddings, stores VECTOR memories, then MCP can inspect the live
-                cluster.
-              </p>
-            </div>
-          </div>
-
-          <figure class="arch-figure">
-            <svg
-              viewBox="0 0 1000 460"
-              class="arch"
-              id="arch-svg"
-              role="img"
-              aria-label="Continuum architecture diagram"
-              data-flow="all"
+          <div class="arch-content">
+            <div
+              class="arch-narrative"
+              id="arch-panel"
+              role="tabpanel"
+              aria-labelledby="arch-tab-0"
+              aria-live="polite"
             >
-              <defs>
-                <linearGradient id="archFill" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#f4faf8" />
-                  <stop offset="100%" stop-color="#e8f2f0" />
-                </linearGradient>
-                <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                  <path d="M0,0 L9,3 L0,6 Z" fill="#0f766e" />
-                </marker>
-                <marker id="arrow-cyan" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                  <path d="M0,0 L9,3 L0,6 Z" fill="#0e7490" />
-                </marker>
-                <marker id="arrow-ink" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                  <path d="M0,0 L9,3 L0,6 Z" fill="#1e293b" />
-                </marker>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="4" result="b" />
-                  <feMerge>
-                    <feMergeNode in="b" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
+              <p class="arch-kicker" id="arch-kicker">Step 01 of 04</p>
+              <h3 id="arch-stage-title">Commit the task cursor</h3>
+              <p id="arch-caption">
+                Invocation A writes session, task, and event rows before the
+                failure boundary. Completed steps will not run again.
+              </p>
+              <div class="arch-progress" aria-hidden="true">
+                <div
+                  class="arch-progress-bar"
+                  id="arch-progress-bar"
+                ></div>
+              </div>
+              <ul class="arch-legend">
+                <li><span class="legend-solid"></span>Runtime data path</li>
+                <li><span class="legend-dashed"></span>Inspection plane</li>
+              </ul>
+            </div>
 
-              <rect x="0" y="0" width="1000" height="460" rx="28" fill="url(#archFill)" />
+            <figure class="arch-figure">
+              <svg
+                viewBox="0 0 1120 600"
+                class="arch"
+                id="arch-svg"
+                role="img"
+                aria-label="Invocation A writes checkpoints to CockroachDB, calls Amazon Bedrock for embeddings, commits vectors, and Invocation B recovers. Cursor reaches CockroachDB separately through Managed MCP."
+                data-step="0"
+              >
+                <defs>
+                  <linearGradient id="arch-bg" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#f8fbf9" />
+                    <stop offset="100%" stop-color="#e8f1ed" />
+                  </linearGradient>
+                  <linearGradient id="db-fill" x1="0" y1="0" x2="0.9" y2="1">
+                    <stop offset="0%" stop-color="#153f39" />
+                    <stop offset="100%" stop-color="#0c2926" />
+                  </linearGradient>
+                  <marker
+                    id="arrow-teal"
+                    markerWidth="9"
+                    markerHeight="9"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L8,3 L0,6 Z" fill="#0b7a70" />
+                  </marker>
+                  <marker
+                    id="arrow-blue"
+                    markerWidth="9"
+                    markerHeight="9"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L8,3 L0,6 Z" fill="#187c9e" />
+                  </marker>
+                  <marker
+                    id="arrow-slate"
+                    markerWidth="9"
+                    markerHeight="9"
+                    refX="8"
+                    refY="3"
+                    orient="auto"
+                  >
+                    <path d="M0,0 L8,3 L0,6 Z" fill="#5c6c78" />
+                  </marker>
+                </defs>
 
-              <!-- Paths written start→end so dash animation travels with the arrow -->
-              <g class="flows" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <!-- 1. Runtime → CockroachDB (task cursor) -->
-                <path
-                  class="flow-line flow-state"
-                  pathLength="100"
-                  d="M238 210 H318"
-                  stroke="#0f766e"
-                  stroke-width="2.75"
-                  marker-end="url(#arrow)"
+                <rect
+                  x="1"
+                  y="1"
+                  width="1118"
+                  height="598"
+                  rx="28"
+                  fill="url(#arch-bg)"
                 />
-                <!-- 2. CockroachDB → Bedrock (embed request) -->
-                <path
-                  class="flow-line flow-vector flow-embed-req"
-                  pathLength="100"
-                  d="M680 140 H758"
-                  stroke="#0e7490"
-                  stroke-width="2.75"
-                  marker-end="url(#arrow-cyan)"
+                <rect
+                  x="350"
+                  y="30"
+                  width="445"
+                  height="530"
+                  rx="24"
+                  class="aws-boundary"
                 />
-                <!-- 3. Bedrock → VECTOR memories (store embedding) -->
-                <path
-                  class="flow-line flow-vector flow-embed-store"
-                  pathLength="100"
-                  d="M760 190 C700 210, 620 270, 565 297"
-                  stroke="#0e7490"
-                  stroke-width="2.75"
-                  marker-end="url(#arrow-cyan)"
-                />
-                <!-- 4. CockroachDB → MCP (inspect) -->
-                <path
-                  class="flow-line flow-mcp"
-                  pathLength="100"
-                  d="M680 300 H758"
-                  stroke="#1e293b"
-                  stroke-width="2.75"
-                  marker-end="url(#arrow-ink)"
-                />
-              </g>
+                <text x="374" y="58" class="boundary-label">
+                  AWS · EU-CENTRAL-1
+                </text>
 
-              <g class="node arch-node" data-node="runtime" tabindex="0" role="button">
-                <rect x="48" y="150" width="190" height="120" rx="18" fill="#0f172a" />
-                <text x="143" y="198" text-anchor="middle" fill="#f8fafc" class="arch-title">Agent Runtime</text>
-                <text x="143" y="228" text-anchor="middle" fill="#94a3b8" class="arch-sub">mission · crash · resume</text>
-              </g>
+                <g class="flows" fill="none" stroke-linecap="round">
+                  <path
+                    class="flow-line flow-checkpoint"
+                    pathLength="100"
+                    d="M275 196 C325 196 338 168 390 168"
+                    stroke="#0b7a70"
+                    stroke-width="3"
+                    marker-end="url(#arrow-teal)"
+                  />
+                  <path
+                    class="flow-line flow-store"
+                    pathLength="100"
+                    d="M275 252 C325 252 340 306 390 306"
+                    stroke="#0b7a70"
+                    stroke-width="3"
+                    marker-end="url(#arrow-teal)"
+                  />
+                  <path
+                    class="flow-line flow-embed"
+                    pathLength="100"
+                    d="M158 290 C158 420 286 495 430 495"
+                    stroke="#187c9e"
+                    stroke-width="3"
+                    marker-start="url(#arrow-blue)"
+                    marker-end="url(#arrow-blue)"
+                  />
+                  <path
+                    class="flow-line flow-recover"
+                    pathLength="100"
+                    d="M740 218 C785 218 805 218 850 218"
+                    stroke="#0b7a70"
+                    stroke-width="3"
+                    marker-end="url(#arrow-teal)"
+                  />
+                  <path
+                    class="inspection-line"
+                    d="M740 350 C800 375 810 485 850 485"
+                    stroke="#5c6c78"
+                    stroke-width="2"
+                    stroke-dasharray="7 8"
+                    marker-start="url(#arrow-slate)"
+                    marker-end="url(#arrow-slate)"
+                  />
+                </g>
 
-              <g class="node arch-node" data-node="crdb" tabindex="0" role="button">
-                <rect x="320" y="70" width="360" height="300" rx="22" fill="#134e4a" />
-                <text x="500" y="118" text-anchor="middle" fill="#ecfdf5" class="arch-title">CockroachDB Memory</text>
-                <text x="500" y="148" text-anchor="middle" fill="#99f6e4" class="arch-sub">AWS · eu-central-1 · Basic</text>
-                <rect class="crdb-cell" x="360" y="180" width="130" height="64" rx="12" fill="#0f766e" />
-                <rect class="crdb-cell" x="510" y="180" width="130" height="64" rx="12" fill="#0f766e" />
-                <rect class="crdb-cell vector-cell" x="435" y="270" width="130" height="54" rx="12" fill="#115e59" />
-                <text x="425" y="218" text-anchor="middle" fill="#ecfdf5" class="arch-tiny">sessions / tasks</text>
-                <text x="575" y="218" text-anchor="middle" fill="#ecfdf5" class="arch-tiny">events</text>
-                <text x="500" y="302" text-anchor="middle" fill="#ecfdf5" class="arch-tiny">VECTOR memories</text>
-              </g>
+                <g class="edge-tag tag-checkpoint">
+                  <rect x="292" y="160" width="90" height="24" rx="7" />
+                  <text x="337" y="176" text-anchor="middle">task + event</text>
+                </g>
+                <g class="edge-tag tag-store">
+                  <rect x="292" y="284" width="92" height="24" rx="7" />
+                  <text x="338" y="300" text-anchor="middle">VECTOR row</text>
+                </g>
+                <g class="edge-tag tag-embed">
+                  <rect x="216" y="422" width="106" height="24" rx="7" />
+                  <text x="269" y="438" text-anchor="middle">embed / result</text>
+                </g>
+                <g class="edge-tag tag-recover">
+                  <rect x="756" y="180" width="80" height="24" rx="7" />
+                  <text x="796" y="196" text-anchor="middle">read cursor</text>
+                </g>
+                <g class="inspection-tag">
+                  <rect x="762" y="405" width="112" height="24" rx="7" />
+                  <text x="818" y="421" text-anchor="middle">read-only inspect</text>
+                </g>
 
-              <g class="node arch-node" data-node="bedrock" tabindex="0" role="button">
-                <rect x="760" y="90" width="190" height="100" rx="18" fill="#0e7490" />
-                <text x="855" y="138" text-anchor="middle" fill="#ecfeff" class="arch-title">Bedrock</text>
-                <text x="855" y="164" text-anchor="middle" fill="#a5f3fc" class="arch-sub">Titan Embeddings V2</text>
-              </g>
+                <g class="arch-node" data-node="runtime-a">
+                  <rect
+                    x="45"
+                    y="140"
+                    width="230"
+                    height="150"
+                    rx="18"
+                    class="runtime-box"
+                  />
+                  <text x="70" y="177" class="node-kicker">INVOCATION A</text>
+                  <text x="70" y="215" class="node-title">Agent Runtime</text>
+                  <text x="70" y="246" class="node-sub">steps 01–02 · then stops</text>
+                </g>
 
-              <g class="node arch-node" data-node="mcp" tabindex="0" role="button">
-                <rect x="760" y="230" width="190" height="100" rx="18" fill="#1e293b" />
-                <text x="855" y="278" text-anchor="middle" fill="#f8fafc" class="arch-title">MCP</text>
-                <text x="855" y="304" text-anchor="middle" fill="#94a3b8" class="arch-sub">Cursor ↔ Cloud</text>
-              </g>
+                <g class="arch-node" data-node="crdb">
+                  <rect
+                    x="390"
+                    y="80"
+                    width="350"
+                    height="300"
+                    rx="22"
+                    fill="url(#db-fill)"
+                  />
+                  <text x="420" y="122" class="node-kicker node-kicker-light">
+                    SYSTEM OF RECORD
+                  </text>
+                  <text x="420" y="160" class="node-title node-title-light">
+                    CockroachDB Memory
+                  </text>
+                  <rect
+                    x="420"
+                    y="195"
+                    width="135"
+                    height="62"
+                    rx="11"
+                    class="db-cell cell-state"
+                  />
+                  <rect
+                    x="575"
+                    y="195"
+                    width="135"
+                    height="62"
+                    rx="11"
+                    class="db-cell cell-events"
+                  />
+                  <rect
+                    x="420"
+                    y="278"
+                    width="290"
+                    height="66"
+                    rx="11"
+                    class="db-cell cell-vector"
+                  />
+                  <text x="487" y="232" text-anchor="middle" class="cell-text">
+                    task cursor
+                  </text>
+                  <text x="642" y="232" text-anchor="middle" class="cell-text">
+                    event log
+                  </text>
+                  <text x="565" y="317" text-anchor="middle" class="cell-text">
+                    VECTOR(1024) memories
+                  </text>
+                </g>
 
-              <g class="edge-tag flow-state">
-                <rect x="242" y="178" width="64" height="22" rx="11" />
-                <text x="274" y="193" text-anchor="middle">cursor</text>
-              </g>
-              <g class="edge-tag flow-vector flow-embed-req">
-                <rect x="688" y="114" width="58" height="22" rx="11" />
-                <text x="717" y="129" text-anchor="middle">embed</text>
-              </g>
-              <g class="edge-tag flow-vector flow-embed-store">
-                <rect x="620" y="232" width="54" height="22" rx="11" />
-                <text x="647" y="247" text-anchor="middle">store</text>
-              </g>
-              <g class="edge-tag flow-mcp">
-                <rect x="688" y="274" width="68" height="22" rx="11" />
-                <text x="722" y="289" text-anchor="middle">inspect</text>
-              </g>
-            </svg>
-          </figure>
+                <g class="arch-node" data-node="bedrock">
+                  <rect
+                    x="430"
+                    y="450"
+                    width="270"
+                    height="90"
+                    rx="18"
+                    class="bedrock-box"
+                  />
+                  <text x="455" y="485" class="node-kicker node-kicker-light">
+                    AMAZON BEDROCK
+                  </text>
+                  <text x="455" y="516" class="node-title-sm node-title-light">
+                    Titan Embeddings V2
+                  </text>
+                </g>
+
+                <g class="arch-node" data-node="runtime-b">
+                  <rect
+                    x="850"
+                    y="140"
+                    width="225"
+                    height="150"
+                    rx="18"
+                    class="runtime-box"
+                  />
+                  <text x="875" y="177" class="node-kicker">INVOCATION B</text>
+                  <text x="875" y="215" class="node-title">Agent Runtime</text>
+                  <text x="875" y="246" class="node-sub">loads cursor · starts at 03</text>
+                </g>
+
+                <g
+                  class="arch-node inspection-node"
+                  data-node="mcp"
+                  data-plane="inspection"
+                >
+                  <rect
+                    x="850"
+                    y="440"
+                    width="225"
+                    height="100"
+                    rx="18"
+                    class="mcp-box"
+                  />
+                  <text x="875" y="476" class="node-kicker">INSPECTION PLANE</text>
+                  <text x="875" y="508" class="node-title-sm">
+                    Cursor → Managed MCP
+                  </text>
+                </g>
+              </svg>
+              <figcaption>
+                Solid lines are runtime traffic. The dashed MCP connection is a
+                separate developer-agent inspection path into the same cluster.
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <section class="readiness section-shell" id="readiness">
+        <div class="section-intro">
+          <div>
+            <p class="eyebrow">Production-minded by design</p>
+            <h2>The failure is the product demo.</h2>
+          </div>
+          <p>
+            Continuum focuses on the moment most agent demos avoid: compute
+            disappears while work is only half finished.
+          </p>
+        </div>
+
+        <div class="readiness-grid">
+          <article>
+            <span>01</span>
+            <h3>Durable execution state</h3>
+            <p>
+              Sessions, ordered tasks, results, and an append-only event trail
+              stay together in CockroachDB.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Client-scoped recovery</h3>
+            <p>
+              A browser resumes only the mission identifier it created — never
+              another visitor’s latest session.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Observable embeddings</h3>
+            <p>
+              Every memory records whether its vector came from Bedrock or the
+              deterministic local fallback.
+            </p>
+          </article>
+        </div>
+
+        <div class="toolchain">
+          <div class="toolchain-head">
+            <p class="eyebrow">Hackathon integrations</p>
+            <h3>Meaningful tools, clearly separated.</h3>
+          </div>
+          <div class="tool-row">
+            <span class="tool-index">CRDB / 01</span>
+            <div>
+              <strong>Distributed Vector Indexing</strong>
+              <p>Runtime memory writes and semantic distance recall.</p>
+            </div>
+            <span class="tool-role">Production path</span>
+          </div>
+          <div class="tool-row">
+            <span class="tool-index">CRDB / 02</span>
+            <div>
+              <strong>Cloud Managed MCP Server</strong>
+              <p>Cursor inspects the live cluster through the managed endpoint.</p>
+            </div>
+            <span class="tool-role">Inspection plane</span>
+          </div>
+          <div class="tool-row">
+            <span class="tool-index">AWS / 01</span>
+            <div>
+              <strong>Amazon Bedrock</strong>
+              <p>Titan Text Embeddings V2 produces normalized 1024-D vectors.</p>
+            </div>
+            <span class="tool-role">Embedding service</span>
+          </div>
         </div>
       </section>
     </main>
 
     <footer class="foot">
-      <span>Continuum · CockroachDB × AWS Hackathon</span>
-      <span>Memory is the product.</span>
+      <div>
+        <a class="mark foot-mark" href="#top">
+          <span class="mark-symbol" aria-hidden="true"></span>
+          <span>CONTINUUM</span>
+        </a>
+        <p>Agents that remember after they die.</p>
+      </div>
+      <div class="foot-links">
+        <a href="https://github.com/valuecoding/Continuum">GitHub</a>
+        <a href="https://youtu.be/7wO_qs9avaI">Demo video</a>
+        <span>CockroachDB × AWS Hackathon</span>
+      </div>
     </footer>
 
-    <script src="/cinema-fx.js"></script>
-    <script src="/app.js" type="module"></script>
+    <script src="/app.js" defer></script>
   </body>
 </html>

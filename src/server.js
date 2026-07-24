@@ -4,9 +4,9 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { closePool, query } from "./db/client.js";
+import { normalizeSessionId } from "./http/session.js";
 import {
   getSession,
-  latestRunningSession,
   listTasks,
   recall,
 } from "./memory/store.js";
@@ -25,31 +25,41 @@ const mime = {
 };
 
 async function buildSnapshot(sessionOverride = null) {
-  const { rows: counts } = await query(`
-    SELECT
-      (SELECT count(*)::int FROM agent_sessions) AS sessions,
-      (SELECT count(*)::int FROM agent_tasks) AS tasks,
-      (SELECT count(*)::int FROM agent_memories) AS memories,
-      (SELECT count(*)::int FROM agent_events) AS events
-  `);
-
-  let session = sessionOverride;
-  if (!session) session = await latestRunningSession();
+  const session = sessionOverride;
   if (!session) {
-    const { rows } = await query(
-      `SELECT * FROM agent_sessions ORDER BY updated_at DESC LIMIT 1`
-    );
-    session = rows[0] || null;
+    return {
+      counts: { tasks: 0, completed: 0, memories: 0, events: 0 },
+      session: null,
+      tasks: [],
+      memories: [],
+    };
   }
 
-  const tasks = session ? await listTasks(session.id) : [];
+  const { rows: counts } = await query(
+    `SELECT
+       (SELECT count(*)::int FROM agent_tasks
+        WHERE session_id = $1) AS tasks,
+       (SELECT count(*)::int FROM agent_tasks
+        WHERE session_id = $1 AND status = 'completed') AS completed,
+       (SELECT count(*)::int FROM agent_memories
+        WHERE session_id = $1) AS memories,
+       (SELECT count(*)::int FROM agent_events
+        WHERE session_id = $1) AS events`,
+    [session.id]
+  );
+
+  const tasks = await listTasks(session.id);
   const memories = await recall("recovery outage agent durable memory", {
     scope: "ops",
+    sessionId: session.id,
     limit: 5,
   });
+  const numericCounts = Object.fromEntries(
+    Object.entries(counts[0]).map(([key, value]) => [key, Number(value)])
+  );
 
   return {
-    counts: counts[0],
+    counts: numericCounts,
     session,
     tasks,
     memories,
@@ -57,8 +67,16 @@ async function buildSnapshot(sessionOverride = null) {
 }
 
 function sendJson(res, status, body) {
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
+  res.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
   res.end(JSON.stringify(body));
+}
+
+function requestedSession(req) {
+  const raw = req.headers["x-continuum-session"];
+  return { raw, id: normalizeSessionId(raw) };
 }
 
 function serveStatic(req, res) {
@@ -91,6 +109,12 @@ function createServer() {
         return;
       }
 
+      const requested = requestedSession(req);
+      if (requested.raw && !requested.id) {
+        sendJson(res, 400, { error: "Invalid Continuum session id" });
+        return;
+      }
+
       if (req.url === "/api/full") {
         const session = await startMission({
           title: "UI full mission",
@@ -118,7 +142,7 @@ function createServer() {
             const snap = await buildSnapshot(session);
             sendJson(res, 200, {
               ...snap,
-              log: `Simulated crash after step 2 · session ${err.sessionId}\nMemory persisted in CockroachDB. Press Resume.`,
+              log: `Invocation A stopped after committed step 2 · ${err.sessionId}\nCursor and vector memory persisted in CockroachDB. Resume starts a fresh request.`,
             });
             return;
           }
@@ -128,27 +152,40 @@ function createServer() {
       }
 
       if (req.url === "/api/resume") {
-        const existing = await latestRunningSession();
+        if (!requested.id) {
+          sendJson(res, 400, {
+            error: "No client-scoped crashed session to resume",
+          });
+          return;
+        }
+        const existing = await getSession(requested.id);
         if (!existing) {
-          sendJson(res, 404, { error: "No crashed/running session to resume" });
+          sendJson(res, 404, { error: "Continuum session not found" });
+          return;
+        }
+        if (!["crashed", "running", "paused"].includes(existing.status)) {
+          sendJson(res, 409, {
+            error: `Session cannot resume from status ${existing.status}`,
+          });
           return;
         }
         const done = await resumeMission(existing.id);
         const snap = await buildSnapshot(done);
         sendJson(res, 200, {
           ...snap,
-          log: `Resumed ${done.id} → ${done.status}`,
+          log: `Invocation B loaded ${done.id} from CockroachDB → ${done.status}`,
         });
         return;
       }
 
       if (req.url === "/api/status") {
-        const snap = await buildSnapshot();
+        const session = requested.id ? await getSession(requested.id) : null;
+        const snap = await buildSnapshot(session);
         sendJson(res, 200, {
           ...snap,
           log: snap.session
-            ? `Showing ${snap.session.status} session ${snap.session.id}`
-            : "No sessions yet. Crash after step 2 to begin the proof.",
+            ? `Client session ${snap.session.id} · ${snap.session.status}`
+            : "No mission in this browser yet. Run the crash proof to begin.",
         });
         return;
       }
