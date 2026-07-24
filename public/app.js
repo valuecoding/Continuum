@@ -29,6 +29,8 @@ const archStory = document.getElementById("arch-story");
 const archFigure = document.querySelector(".arch-figure");
 const archPanel = document.getElementById("arch-panel");
 const archProgressBar = document.getElementById("arch-progress-bar");
+const archReplayButton = document.getElementById("btn-arch-replay");
+const archTourStatus = document.getElementById("arch-tour-status");
 const archStepBtns = [...document.querySelectorAll(".arch-step")];
 const archNodes = [...document.querySelectorAll(".arch-node")];
 
@@ -418,10 +420,23 @@ function syncArchPause() {
     "is-paused",
     archAutoplay && archTourBlocked()
   );
+  syncArchTourStatus();
+}
+
+function syncArchTourStatus() {
+  if (archStory.classList.contains("is-complete")) {
+    archTourStatus.textContent = "Tour complete";
+  } else if (!archAutoplay) {
+    archTourStatus.textContent = "Manual view";
+  } else if (archTourBlocked()) {
+    archTourStatus.textContent = "Paused for inspection";
+  } else {
+    archTourStatus.textContent = "Auto-playing";
+  }
 }
 
 function restartArchProgress(dwellMs) {
-  archStory.classList.remove("is-playing");
+  archStory.classList.remove("is-playing", "is-complete");
   archProgressBar.style.animationDuration = "";
   void archProgressBar.offsetWidth;
   if (!archAutoplay || reduceMotion) return;
@@ -463,7 +478,18 @@ function setArchStep(index) {
 
 function stopArchTour() {
   clearArchTimer();
+  archRemainingMs = null;
+  archStory.classList.remove("is-playing", "is-paused", "is-complete");
+  syncArchTourStatus();
+}
+
+function completeArchTour() {
+  clearArchTimer();
+  archAutoplay = false;
+  archRemainingMs = null;
   archStory.classList.remove("is-playing", "is-paused");
+  archStory.classList.add("is-complete");
+  syncArchTourStatus();
 }
 
 function scheduleArchTour({ resume = false } = {}) {
@@ -483,6 +509,10 @@ function scheduleArchTour({ resume = false } = {}) {
     archTimer = null;
     archDeadline = 0;
     archRemainingMs = null;
+    if (archIndex === ARCH_STEPS.length - 1) {
+      completeArchTour();
+      return;
+    }
     setArchStep(archIndex + 1);
     scheduleArchTour();
   }, dwell);
@@ -492,6 +522,17 @@ function setArchAutoplay(nextAutoplay) {
   archAutoplay = Boolean(nextAutoplay) && !reduceMotion;
   if (archAutoplay) scheduleArchTour();
   else stopArchTour();
+  syncArchTourStatus();
+}
+
+function replayArchTour() {
+  clearArchTimer();
+  archRemainingMs = null;
+  archAutoplay = !reduceMotion;
+  archStory.classList.remove("is-playing", "is-paused", "is-complete");
+  setArchStep(0);
+  if (archAutoplay) scheduleArchTour();
+  syncArchTourStatus();
 }
 
 function setArchPaused(kind, paused) {
@@ -531,6 +572,7 @@ function onArchVisibility(inView) {
     setArchStep(0);
   }
   scheduleArchTour();
+  syncArchTourStatus();
 }
 
 for (const button of buttons) {
@@ -560,6 +602,8 @@ for (const button of archStepBtns) {
     archStepBtns[next].focus();
   });
 }
+
+archReplayButton.addEventListener("click", replayArchTour);
 
 archFigure.addEventListener("mouseenter", () =>
   setArchPaused("hover", true)

@@ -1300,6 +1300,87 @@ a {
   animation-play-state: paused;
 }
 
+.arch-story.is-complete .arch-progress-bar {
+  width: 100%;
+}
+
+.arch-tour-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+}
+
+.arch-tour-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.69rem;
+}
+
+.arch-tour-dot {
+  width: 0.42rem;
+  height: 0.42rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
+.arch-story.is-playing:not(.is-paused) .arch-tour-dot {
+  animation: phase-pulse 1.4s ease-in-out infinite;
+}
+
+.arch-story.is-complete .arch-tour-dot {
+  background: var(--teal-bright);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+}
+
+.arch-replay {
+  appearance: none;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.42rem 0.62rem;
+  color: var(--teal-deep);
+  border: 1px solid rgba(11, 122, 112, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.52);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.arch-replay > span {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.arch-replay:hover {
+  color: var(--ink);
+  border-color: rgba(11, 122, 112, 0.4);
+  background: rgba(255, 255, 255, 0.82);
+  transform: translateY(-1px);
+}
+
+.arch-replay:active {
+  transform: translateY(0);
+}
+
+.arch-replay:focus-visible {
+  outline: 3px solid rgba(24, 124, 158, 0.35);
+  outline-offset: 3px;
+}
+
 .arch-legend {
   list-style: none;
   display: grid;

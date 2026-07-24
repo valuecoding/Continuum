@@ -212,6 +212,7 @@ test("browser proof isolates and resumes its own session", async (context) => {
         ".panel-label",
         ".arch-kicker",
         ".arch-legend",
+        ".arch-tour-status",
         ".tool-index",
       ];
       const undersized = minimumFontSelectors.filter(
@@ -273,6 +274,26 @@ test("browser proof isolates and resumes its own session", async (context) => {
     assert.match(
       await page.locator("#arch-caption").textContent(),
       /runtime sends memory text to Amazon Bedrock/i
+    );
+    assert.equal(
+      await page.locator("#arch-tour-status").textContent(),
+      "Manual view"
+    );
+
+    await page.locator("#btn-arch-replay").click();
+    assert.equal(
+      await page.locator("#arch-tab-0").getAttribute("aria-selected"),
+      "true"
+    );
+    assert.equal(
+      await page.locator("#arch-tour-status").textContent(),
+      "Auto-playing"
+    );
+    assert.equal(
+      await page.locator("#arch-story").evaluate((element) =>
+        element.classList.contains("is-playing")
+      ),
+      true
     );
 
     await page.close();
