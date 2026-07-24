@@ -29,6 +29,6 @@
     "playwright-core": "^1.61.1"
   },
   "devDependencies": {
-    "wrangler": "4.113.0"
+    "wrangler": "4.114.0"
   }
 }
