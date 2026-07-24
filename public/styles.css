@@ -202,7 +202,7 @@ a {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.55);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.69rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -308,7 +308,7 @@ a {
 
 .btn small {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.69rem;
   letter-spacing: 0.02em;
   opacity: 0.72;
 }
@@ -396,7 +396,7 @@ a {
   border: 1px solid rgba(11, 122, 112, 0.22);
   border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -410,7 +410,7 @@ a {
   padding: 0;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.02em;
 }
 
@@ -458,7 +458,7 @@ a {
   margin: 0 0 0.18rem;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -478,7 +478,7 @@ a {
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
   font-family: var(--font-mono);
-  font-size: 0.64rem;
+  font-size: 0.69rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -520,7 +520,7 @@ a {
 .memory-core > span {
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.68rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -537,7 +537,7 @@ a {
   margin-top: 0.55rem;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.69rem;
 }
 
 .memory-core {
@@ -573,7 +573,7 @@ a {
   border-radius: 7px;
   background: rgba(255, 255, 255, 0.05);
   font-family: var(--font-mono);
-  font-size: 0.59rem;
+  font-size: 0.68rem;
 }
 
 .handoff-arrow {
@@ -583,7 +583,7 @@ a {
   min-width: 0;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.63rem;
   text-align: center;
   opacity: 0.55;
   transition: opacity 260ms ease;
@@ -641,13 +641,13 @@ a {
 
 .checkpoint-ledger span {
   color: var(--muted);
-  font-size: 0.65rem;
+  font-size: 0.69rem;
 }
 
 .checkpoint-ledger strong {
   margin-top: 0.22rem;
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.71rem;
 }
 
 .continuity-card[data-phase="running"] .runtime-a,
@@ -807,7 +807,7 @@ a {
 }
 
 .btn-console small {
-  font-size: 0.56rem;
+  font-size: 0.68rem;
 }
 
 .btn-console:disabled {
@@ -823,7 +823,7 @@ a {
   gap: 0.65rem;
   color: #c1d4ce;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .phase-dot {
@@ -864,7 +864,7 @@ a {
   overflow: hidden;
   color: #7f9690;
   font-family: var(--font-mono);
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -891,7 +891,7 @@ a {
   color: #94aaa4;
   border-bottom: 1px solid var(--console-line);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
 }
@@ -951,7 +951,7 @@ a {
   right: 1rem;
   color: #ff8198;
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.67rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -964,7 +964,7 @@ a {
 .timeline .step {
   color: #66817a;
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.71rem;
 }
 
 .timeline .goal {
@@ -987,7 +987,7 @@ a {
   margin-top: 0.42rem;
   color: #6f8881;
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.67rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -1036,7 +1036,7 @@ a {
 .evidence-grid span {
   margin-top: 0.18rem;
   color: #718983;
-  font-size: 0.63rem;
+  font-size: 0.68rem;
 }
 
 .recall {
@@ -1106,7 +1106,7 @@ a {
 .memory-provider,
 .memory-distance {
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.67rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
@@ -1154,7 +1154,7 @@ a {
   overflow: auto;
   color: #829a94;
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.71rem;
   line-height: 1.6;
   white-space: pre-wrap;
 }
@@ -1222,7 +1222,7 @@ a {
 .arch-step > span {
   color: var(--muted-light);
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 400;
 }
 
@@ -1258,7 +1258,7 @@ a {
   margin: 0 0 0.7rem;
   color: var(--teal);
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.72rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
 }
@@ -1308,7 +1308,7 @@ a {
   padding: 2rem 0 0;
   color: var(--muted);
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.69rem;
 }
 
 .arch-legend li {
@@ -1349,7 +1349,7 @@ a {
   max-width: 78ch;
   margin: 0.8rem 0.3rem 0;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.84rem;
 }
 
 .aws-boundary {
@@ -1360,12 +1360,17 @@ a {
 }
 
 .boundary-label,
-.node-kicker,
+.node-kicker {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  letter-spacing: 0.08em;
+}
+
 .edge-tag text,
 .inspection-tag text {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
+  font-size: 14px;
+  letter-spacing: 0.025em;
 }
 
 .boundary-label {
@@ -1400,12 +1405,12 @@ a {
 .node-title-sm {
   fill: #0b201c;
   font-family: var(--font-display);
-  font-size: 23px;
+  font-size: 24px;
   font-weight: 700;
 }
 
 .node-title-sm {
-  font-size: 18px;
+  font-size: 21px;
 }
 
 .node-title-light {
@@ -1415,7 +1420,7 @@ a {
 .node-sub {
   fill: #60756f;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .db-cell {
@@ -1428,7 +1433,7 @@ a {
 .cell-text {
   fill: #bce5dd;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .arch-node {
@@ -1436,7 +1441,7 @@ a {
 }
 
 .arch-node.is-dim:not(.inspection-node) {
-  opacity: 0.22;
+  opacity: 0.34;
 }
 
 .arch-node.is-hot > rect:first-child {
@@ -1444,12 +1449,12 @@ a {
 }
 
 .inspection-node {
-  opacity: 0.68;
+  opacity: 0.82;
 }
 
 .inspection-line,
 .inspection-tag {
-  opacity: 0.56;
+  opacity: 0.72;
 }
 
 .inspection-tag rect,
@@ -1554,7 +1559,7 @@ a {
 .readiness-grid article > span {
   color: var(--teal);
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.72rem;
 }
 
 .readiness-grid h3 {
@@ -1568,7 +1573,7 @@ a {
 .readiness-grid p {
   margin: 0.85rem 0 0;
   color: var(--muted);
-  font-size: 0.91rem;
+  font-size: 0.95rem;
   line-height: 1.6;
 }
 
@@ -1612,20 +1617,20 @@ a {
 .tool-role {
   color: #6f8881;
   font-family: var(--font-mono);
-  font-size: 0.61rem;
+  font-size: 0.68rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .tool-row strong {
   display: block;
-  font-size: 0.98rem;
+  font-size: 1.02rem;
 }
 
 .tool-row p {
   margin: 0.22rem 0 0;
   color: #819891;
-  font-size: 0.82rem;
+  font-size: 0.87rem;
 }
 
 .tool-role {
@@ -1651,7 +1656,7 @@ a {
 .foot p {
   margin: 0.7rem 0 0;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .foot-links {
@@ -1660,7 +1665,7 @@ a {
   justify-content: flex-end;
   gap: 0.8rem 1.2rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
 }
 
 .foot-links a {

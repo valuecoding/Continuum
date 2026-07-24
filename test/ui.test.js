@@ -184,6 +184,57 @@ test("browser proof isolates and resumes its own session", async (context) => {
     await page.waitForFunction(() =>
       document.getElementById("arch-story").classList.contains("is-playing")
     );
+    const architectureReadability = await page.evaluate(() => {
+      const overflow = [];
+      const groups = document.querySelectorAll(
+        ".arch-node, .edge-tag, .inspection-tag"
+      );
+      for (const group of groups) {
+        const rect = group.querySelector("rect");
+        if (!rect) continue;
+        const container = rect.getBBox();
+        for (const label of group.querySelectorAll("text")) {
+          const box = label.getBBox();
+          if (
+            box.x < container.x - 1 ||
+            box.x + box.width > container.x + container.width + 1 ||
+            box.y < container.y - 1 ||
+            box.y + box.height > container.y + container.height + 1
+          ) {
+            overflow.push(label.textContent.trim());
+          }
+        }
+      }
+
+      const minimumFontSelectors = [
+        ".runtime-card > span",
+        ".session-meta",
+        ".panel-label",
+        ".arch-kicker",
+        ".arch-legend",
+        ".tool-index",
+      ];
+      const undersized = minimumFontSelectors.filter(
+        (selector) =>
+          parseFloat(
+            getComputedStyle(document.querySelector(selector)).fontSize
+          ) < 10.8
+      );
+
+      return {
+        overflow,
+        undersized,
+        nodeKickerSize: parseFloat(
+          getComputedStyle(
+            document.querySelector(".arch-node .node-kicker")
+          ).fontSize
+        ),
+      };
+    });
+    assert.deepEqual(architectureReadability.overflow, []);
+    assert.deepEqual(architectureReadability.undersized, []);
+    assert.ok(architectureReadability.nodeKickerSize >= 16);
+
     await page.waitForTimeout(650);
     await page.locator(".arch-figure").hover();
     await page.waitForTimeout(80);
