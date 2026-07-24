@@ -108,6 +108,7 @@ test("browser proof isolates and resumes its own session", async (context) => {
       const headingLevels = [...document.querySelectorAll("h1,h2,h3")].map(
         (heading) => Number(heading.tagName.slice(1))
       );
+      const recall = document.getElementById("recall");
       return {
         documentWidth: document.documentElement.scrollWidth,
         viewportWidth: document.documentElement.clientWidth,
@@ -120,6 +121,14 @@ test("browser proof isolates and resumes its own session", async (context) => {
             !button.getAttribute("aria-label")
         ).length,
         headingLevels,
+        recallScrollbarWidth: getComputedStyle(
+          recall,
+          "::-webkit-scrollbar"
+        ).width,
+        recallScrollbarButton: getComputedStyle(
+          recall,
+          "::-webkit-scrollbar-button"
+        ).display,
       };
     });
     const headingSkips = semantics.headingLevels.some(
@@ -131,6 +140,8 @@ test("browser proof isolates and resumes its own session", async (context) => {
     assert.deepEqual(semantics.duplicates, []);
     assert.equal(semantics.unnamedButtons, 0);
     assert.equal(headingSkips, false);
+    assert.equal(semantics.recallScrollbarWidth, "8px");
+    assert.equal(semantics.recallScrollbarButton, "none");
 
     await page.locator("#btn-crash").click();
     await page.waitForFunction(() => document.body.dataset.phase === "crashed");
