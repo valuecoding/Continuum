@@ -298,4 +298,44 @@ test("browser proof isolates and resumes its own session", async (context) => {
 
     await page.close();
   }
+
+  const errorPage = await browser.newPage({
+    viewport: { width: 1280, height: 800 },
+  });
+  await errorPage.route("**/api/**", async (route) => {
+    const endpoint = new URL(route.request().url()).pathname;
+    if (endpoint === "/api/status") {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          counts: { tasks: 0, completed: 0, memories: 0, events: 0 },
+          session: null,
+          tasks: [],
+          memories: [],
+          log: "No mission in this browser yet.",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 429,
+      contentType: "application/json",
+      body: JSON.stringify({
+        error: "Too many demo requests. Try again in a minute.",
+      }),
+    });
+  });
+  await errorPage.goto(url, { waitUntil: "domcontentloaded" });
+  await errorPage.waitForFunction(() => document.body.dataset.phase === "ready");
+  await errorPage.locator("#btn-crash").click();
+  await errorPage.waitForFunction(
+    () => document.getElementById("phase-banner").dataset.phase === "error"
+  );
+  assert.match(
+    await errorPage.locator("#phase-text").textContent(),
+    /too many demo requests/i
+  );
+  assert.equal(await errorPage.locator("#btn-crash").isEnabled(), true);
+  await errorPage.close();
 });

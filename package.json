@@ -10,6 +10,7 @@
   "scripts": {
     "db:migrate": "node src/db/migrate.js",
     "db:ping": "node src/db/ping.js",
+    "db:evidence": "node src/db/evidence.js",
     "demo": "node src/demo/crash-resume.js",
     "demo:kill": "node src/demo/crash-resume.js --crash-midway",
     "demo:resume": "node src/demo/crash-resume.js --resume",

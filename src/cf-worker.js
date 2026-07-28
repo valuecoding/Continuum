@@ -212,13 +212,24 @@ async function handleApi(request, env) {
         if (!existing) {
           return json({ error: "Continuum session not found" }, 404);
         }
-        if (!["crashed", "running", "paused"].includes(existing.status)) {
+        if (!["crashed", "paused"].includes(existing.status)) {
           return json(
             { error: `Session cannot resume from status ${existing.status}` },
             409
           );
         }
-        const done = await resumeMission(existing.id);
+        let done;
+        try {
+          done = await resumeMission(existing.id);
+        } catch (error) {
+          if (error?.code === "CONTINUUM_RESUME_CONFLICT") {
+            return json(
+              { error: "This mission is already being resumed" },
+              409
+            );
+          }
+          throw error;
+        }
         const snap = await buildSnapshot(done);
         return json({
           ...snap,

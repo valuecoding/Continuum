@@ -29,6 +29,23 @@ export async function setSessionStatus(sessionId, status) {
   return rows[0];
 }
 
+/**
+ * Atomically claim a crashed mission for a single recovery invocation.
+ * The compare-and-set prevents two concurrent requests from replaying the
+ * same pending tasks and writing duplicate recovery events or memories.
+ */
+export async function claimSessionForResume(sessionId) {
+  const { rows } = await query(
+    `UPDATE agent_sessions
+     SET status = 'running', updated_at = now()
+     WHERE id = $1
+       AND status IN ('crashed', 'paused')
+     RETURNING *`,
+    [sessionId]
+  );
+  return rows[0] || null;
+}
+
 export async function addTask(sessionId, stepIndex, goal, payload = {}) {
   const { rows } = await query(
     `INSERT INTO agent_tasks (session_id, step_index, goal, payload, status)

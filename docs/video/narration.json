@@ -1,34 +1,38 @@
 [
   {
     "id": "hero",
-    "text": "Continuum. Agents that remember after they die. When a process crashes mid-mission, most agents forget everything. Continuum does not."
+    "text": "Continuum. The runtime stops. The mission continues. When an agent process dies mid-mission, in-memory context dies with it. Continuum makes the recovery boundary visible."
   },
   {
     "id": "problem",
-    "text": "Production agents write constantly, spawn autonomously, and fail. If memory lives only in RAM, the workflow dies with the process."
+    "text": "Production agents fail while tools are running and work is half complete. Restarting from zero can duplicate side effects. Asking a human to explain the mission again defeats autonomy."
   },
   {
     "id": "architecture",
-    "text": "Continuum stores the mission cursor, event log, and semantic embeddings in CockroachDB on AWS. Amazon Bedrock Titan creates the vectors. Cursor connects through the CockroachDB Cloud MCP server."
+    "text": "Invocation A checkpoints the cursor and event trail in CockroachDB Cloud on AWS. Amazon Bedrock Titan creates normalized vectors for the distributed vector index. The development agent inspects that same cluster through Managed MCP, on a separate read-only plane."
   },
   {
     "id": "crash",
-    "text": "Watch the jury proof. We start a real mission, then simulate a crash after step two. Steps three and four stay pending in CockroachDB."
+    "text": "Now the live jury proof. One click creates a real mission and deterministically stops Invocation A after the second committed step. The request ends. Steps three and four remain pending in CockroachDB."
   },
   {
     "id": "memory",
-    "text": "The timeline is not a mock. It is durable task state. Semantic recall pulls related memories from the same database using distributed vector search."
+    "text": "This console is not pre-rendered. The task cursor, event count, provider metadata, and recalled memories all came back from this client-scoped CockroachDB session. The provider evidence is Bedrock."
   },
   {
     "id": "resume",
-    "text": "Now we resume. Continuum reads the unfinished cursor and continues from the next pending step. No human re-briefing. No lost context."
+    "text": "Resume starts a fresh HTTP invocation. Invocation B receives only the session UUID, reconstructs the mission from durable state, skips the two completed tasks, and continues at step three. No in-memory handoff. No human re-brief."
   },
   {
     "id": "completed",
-    "text": "The mission completes. Closing memories are written back with Bedrock embeddings, still queryable beside the transactional state."
+    "text": "The same mission now shows four of four steps committed. Closing memory is written back with a Bedrock embedding and remains queryable beside the transactional state."
+  },
+  {
+    "id": "production",
+    "text": "The public proof is client-scoped and rate-limited. Cross-site API calls are rejected, concurrent resume requests are atomically claimed, internal errors stay private, and secrets live only in platform bindings."
   },
   {
     "id": "closing",
-    "text": "Continuum. CockroachDB for agentic memory. Bedrock for embeddings. Built so agents survive failure. Memory is the product."
+    "text": "Continuum. CockroachDB for agentic memory. Bedrock for embeddings. Managed MCP for safe inspection. Built so agents survive failure. Memory is the product."
   }
 ]

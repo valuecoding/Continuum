@@ -854,6 +854,15 @@ a {
   color: #8de3d6;
 }
 
+.phase-banner[data-phase="error"] {
+  color: #ff9aae;
+}
+
+.phase-banner[data-phase="error"] .phase-dot {
+  background: #ff6681;
+  box-shadow: 0 0 0 4px rgba(255, 102, 129, 0.13);
+}
+
 .phase-banner[data-phase="completed"] .phase-dot {
   background: #45d1bd;
   box-shadow: 0 0 0 4px rgba(69, 209, 189, 0.13);
@@ -1622,7 +1631,7 @@ a {
 
 .readiness-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.4);
@@ -1834,6 +1843,19 @@ a {
 
   .arch-legend {
     margin-top: 1rem;
+  }
+
+  .readiness-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .readiness-grid article:nth-child(3) {
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+
+  .readiness-grid article:nth-child(4) {
+    border-top: 1px solid var(--line);
   }
 }
 

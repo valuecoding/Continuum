@@ -106,7 +106,7 @@ function storeSessionId(sessionId) {
 function syncActions() {
   if (busy) return;
   for (const btn of buttons) btn.disabled = false;
-  btnResume.disabled = !["crashed", "running"].includes(currentPhase);
+  btnResume.disabled = currentPhase !== "crashed";
 }
 
 function setBusy(nextBusy) {
@@ -121,6 +121,11 @@ function flashCrash() {
   void fxLayer.offsetWidth;
   fxLayer.classList.add("is-crash");
   window.setTimeout(() => fxLayer.classList.remove("is-crash"), 650);
+}
+
+function showApiError(message) {
+  phaseBanner.dataset.phase = "error";
+  phaseText.textContent = message;
 }
 
 function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
@@ -398,6 +403,7 @@ async function call(action) {
       sessionId: storedSessionId(),
       mode: lastRunMode,
     });
+    showApiError(message);
   } finally {
     window.clearTimeout(timeout);
     setBusy(false);

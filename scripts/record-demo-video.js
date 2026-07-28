@@ -52,7 +52,8 @@ async function installCinemaLayer(page) {
         <div>
           <p class="brand">CONTINUUM</p>
           <h1>Memory is the product.</h1>
-          <p>CockroachDB · Amazon Bedrock · MCP</p>
+          <p>CockroachDB Cloud · Amazon Bedrock · Managed MCP</p>
+          <p class="url">continuum.vortex-digital.de</p>
         </div>
       `;
       document.body.append(endcard);
@@ -64,12 +65,14 @@ async function installCinemaLayer(page) {
           el.classList.remove("cinema-focus", "cinema-focus-click");
         }
       },
-      focus(selector) {
+      focus(selector, shouldScroll = true) {
         this.clearFocus();
         const el = document.querySelector(selector);
         if (!el) return;
         el.classList.add("cinema-focus");
-        el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        if (shouldScroll) {
+          el.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        }
       },
       markClick(selector) {
         const el = document.querySelector(selector);
@@ -91,13 +94,17 @@ async function smoothScrollTo(page, locator, block = "center") {
   await page.waitForTimeout(850);
 }
 
-async function focusSelector(page, selector) {
-  await page.evaluate((sel) => window.__continuumCinema?.focus(sel), selector);
+async function focusSelector(page, selector, { scroll = true } = {}) {
+  await page.evaluate(
+    ({ sel, shouldScroll }) =>
+      window.__continuumCinema?.focus(sel, shouldScroll),
+    { sel: selector, shouldScroll: scroll }
+  );
   await page.waitForTimeout(650);
 }
 
-async function clickExact(page, selector) {
-  await focusSelector(page, selector);
+async function clickExact(page, selector, { scroll = true } = {}) {
+  await focusSelector(page, selector, { scroll });
   await page.evaluate((sel) => window.__continuumCinema?.markClick(sel), selector);
   await page.waitForTimeout(180);
   // Click the real element center — no fake cursor, no transform offset
@@ -183,8 +190,8 @@ try {
       });
     } else if (scene.id === "architecture") {
       await playScene(page, scene.id, durations, async () => {
-        await smoothScrollTo(page, page.locator("#architecture"), "center");
-        await focusSelector(page, ".arch");
+        await smoothScrollTo(page, page.locator(".arch-story"), "center");
+        await focusSelector(page, ".arch-story", { scroll: false });
       });
     } else if (scene.id === "crash") {
       await playScene(page, scene.id, durations, async () => {
@@ -194,25 +201,30 @@ try {
         await page.waitForTimeout(500);
         await clickExact(page, "#btn-crash");
         await waitForTimelineStatus(page, "crashed");
-        await focusSelector(page, "#timeline");
+        await focusSelector(page, "#timeline", { scroll: false });
       });
     } else if (scene.id === "memory") {
       await playScene(page, scene.id, durations, async () => {
-        await focusSelector(page, "#timeline");
+        await focusSelector(page, "#timeline", { scroll: false });
         await page.waitForTimeout(500);
-        await focusSelector(page, "#recall");
+        await focusSelector(page, "#recall", { scroll: false });
       });
     } else if (scene.id === "resume") {
       await playScene(page, scene.id, durations, async () => {
-        await clickExact(page, "#btn-resume");
+        await clickExact(page, "#btn-resume", { scroll: false });
         await waitForTimelineStatus(page, "completed");
-        await focusSelector(page, "#timeline");
+        await focusSelector(page, "#timeline", { scroll: false });
       });
     } else if (scene.id === "completed") {
       await playScene(page, scene.id, durations, async () => {
-        await focusSelector(page, "#timeline");
+        await focusSelector(page, "#timeline", { scroll: false });
         await page.waitForTimeout(400);
-        await focusSelector(page, "#stats");
+        await focusSelector(page, "#stats", { scroll: false });
+      });
+    } else if (scene.id === "production") {
+      await playScene(page, scene.id, durations, async () => {
+        await smoothScrollTo(page, page.locator("#readiness"), "center");
+        await focusSelector(page, ".readiness-grid", { scroll: false });
       });
     } else if (scene.id === "closing") {
       await playScene(page, scene.id, durations, async () => {

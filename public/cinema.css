@@ -28,6 +28,14 @@ html.cinema .log {
   font-size: 0.9rem;
 }
 
+html.cinema .proof {
+  padding-bottom: 24rem;
+}
+
+html.cinema .architecture .section-intro {
+  display: none;
+}
+
 /* Accurate focus cue — attached to the real target, never a fake cursor */
 .cinema-focus {
   position: relative !important;
@@ -115,4 +123,12 @@ html.cinema .log {
   font-family: "Instrument Sans", sans-serif;
   font-size: 1.25rem;
   text-align: center;
+}
+
+#cinema-endcard .url {
+  margin-top: 0.65rem;
+  color: #ecfdf5;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
 }

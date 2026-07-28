@@ -163,13 +163,24 @@ function createServer() {
           sendJson(res, 404, { error: "Continuum session not found" });
           return;
         }
-        if (!["crashed", "running", "paused"].includes(existing.status)) {
+        if (!["crashed", "paused"].includes(existing.status)) {
           sendJson(res, 409, {
             error: `Session cannot resume from status ${existing.status}`,
           });
           return;
         }
-        const done = await resumeMission(existing.id);
+        let done;
+        try {
+          done = await resumeMission(existing.id);
+        } catch (error) {
+          if (error?.code === "CONTINUUM_RESUME_CONFLICT") {
+            sendJson(res, 409, {
+              error: "This mission is already being resumed",
+            });
+            return;
+          }
+          throw error;
+        }
         const snap = await buildSnapshot(done);
         sendJson(res, 200, {
           ...snap,

@@ -1,5 +1,6 @@
 import {
   addTask,
+  claimSessionForResume,
   createSession,
   getSession,
   listTasks,
@@ -177,6 +178,12 @@ export async function runMission(
 }
 
 export async function resumeMission(sessionId, opts = {}) {
+  const claimed = await claimSessionForResume(sessionId);
+  if (!claimed) {
+    const error = new Error("Mission is already resuming or cannot be resumed");
+    error.code = "CONTINUUM_RESUME_CONFLICT";
+    throw error;
+  }
   await logEvent(sessionId, "mission_resumed", "Resuming from durable memory");
   return runMission(sessionId, opts);
 }

@@ -2,6 +2,9 @@
 
 **The runtime stops. The mission continues.**
 
+[![CI](https://github.com/valuecoding/Continuum/actions/workflows/ci.yml/badge.svg)](https://github.com/valuecoding/Continuum/actions/workflows/ci.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-0b7a70.svg)](LICENSE)
+
 Continuum is a crash-resilient agent runtime whose task cursor, event trail, and
 semantic memory live in CockroachDB. Amazon Bedrock Titan Embeddings V2 turns
 memory text into normalized 1024-dimensional vectors; a fresh runtime request
@@ -127,6 +130,7 @@ read-after-write consistency in the crash/resume proof.
 - `.env` based on `.env.example`
 - optional Bedrock bearer token or AWS credentials
 - Google Chrome for the browser test and preview capture
+- Python 3 and FFmpeg 8 for narrated video assets only
 
 ### Install and migrate
 
@@ -162,6 +166,13 @@ The unit suite verifies UUID isolation and deterministic normalized fallback
 embeddings. The real-Chrome suite verifies the complete crash/resume UI at
 desktop and mobile widths, the `X-Continuum-Session` handoff, responsive
 overflow, provider evidence, and keyboard-operable architecture tabs.
+
+With live credentials configured, verify the actual production vector index and
+embedding-provider evidence without creating a new mission:
+
+```bash
+npm run db:evidence
+```
 
 ### Deploy
 
@@ -217,6 +228,9 @@ npm.cmd run video:draft
 The output is written below `artifacts/video/`. Narration source is versioned in
 `docs/video/narration.json`; public uploads should disclose AI-generated
 narration.
+
+Copy-ready Devpost text and the final registration checklist live in
+[`docs/SUBMISSION.md`](docs/SUBMISSION.md).
 
 ## License
 

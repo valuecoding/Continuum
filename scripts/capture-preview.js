@@ -48,7 +48,7 @@ try {
   await page.locator("#proof-console").evaluate((el) =>
     el.scrollIntoView({ behavior: "instant", block: "start" })
   );
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(500);
   await page.screenshot({
     path: path.join(outputDirectory, "crashed.png"),
     fullPage: false,
@@ -59,7 +59,7 @@ try {
   await page.locator("#proof-console").evaluate((el) =>
     el.scrollIntoView({ behavior: "instant", block: "start" })
   );
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(500);
   await page.screenshot({
     path: path.join(outputDirectory, "resumed.png"),
     fullPage: false,
@@ -68,10 +68,9 @@ try {
   await page.locator("#architecture").evaluate((el) =>
     el.scrollIntoView({ behavior: "instant", block: "start" })
   );
-  await page.waitForTimeout(250);
-  await page.screenshot({
+  await page.waitForTimeout(500);
+  await page.locator(".arch-story").screenshot({
     path: path.join(outputDirectory, "architecture.png"),
-    fullPage: false,
   });
 
   const socialPage = await browser.newPage({
