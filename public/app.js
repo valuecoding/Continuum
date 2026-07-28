@@ -128,6 +128,19 @@ function showApiError(message) {
   phaseText.textContent = message;
 }
 
+function alignProofConsole(behavior = reduceMotion ? "auto" : "smooth") {
+  const headerHeight = stickyHeader?.getBoundingClientRect().height || 70;
+  const targetTop =
+    window.scrollY +
+    proofConsole.getBoundingClientRect().top -
+    headerHeight -
+    12;
+  window.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior,
+  });
+}
+
 function setPhase(phase, { sessionId = null, mode = lastRunMode } = {}) {
   currentPhase = phase;
   lastRunMode = mode;
@@ -369,16 +382,7 @@ async function call(action) {
   if (["crash", "resume", "full"].includes(action)) {
     lastRunMode = action === "full" ? "full" : "recovery";
     setPhase("running", { mode: lastRunMode });
-    const headerHeight = stickyHeader?.getBoundingClientRect().height || 70;
-    const targetTop =
-      window.scrollY +
-      proofConsole.getBoundingClientRect().top -
-      headerHeight -
-      12;
-    window.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior: reduceMotion ? "auto" : "smooth",
-    });
+    alignProofConsole();
   }
 
   const controller = new AbortController();
@@ -392,6 +396,9 @@ async function call(action) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || response.statusText);
     applyPayload(data, action);
+    if (["crash", "resume", "full"].includes(action)) {
+      alignProofConsole("auto");
+    }
     if (action === "crash") flashCrash();
   } catch (error) {
     const message =

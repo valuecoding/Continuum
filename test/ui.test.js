@@ -52,6 +52,11 @@ function payload(status) {
   };
 }
 
+async function blockRemoteFonts(page) {
+  await page.route("https://fonts.googleapis.com/**", (route) => route.abort());
+  await page.route("https://fonts.gstatic.com/**", (route) => route.abort());
+}
+
 test("browser proof isolates and resumes its own session", async (context) => {
   const { server, url } = await startServer({ port: 0 });
   const browser = await chromium.launch({ channel: "chrome", headless: true });
@@ -68,6 +73,7 @@ test("browser proof isolates and resumes its own session", async (context) => {
     { width: 390, height: 844 },
   ]) {
     const page = await browser.newPage({ viewport });
+    await blockRemoteFonts(page);
     await page.route("**/api/**", async (route) => {
       const request = route.request();
       const endpoint = new URL(request.url()).pathname;
@@ -302,6 +308,7 @@ test("browser proof isolates and resumes its own session", async (context) => {
   const errorPage = await browser.newPage({
     viewport: { width: 1280, height: 800 },
   });
+  await blockRemoteFonts(errorPage);
   await errorPage.route("**/api/**", async (route) => {
     const endpoint = new URL(route.request().url()).pathname;
     if (endpoint === "/api/status") {
