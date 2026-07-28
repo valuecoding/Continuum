@@ -19,7 +19,7 @@
     "video:audio": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/generate-video-audio.ps1",
     "agent": "node src/demo/crash-resume.js",
     "dev:server": "node src/server.js",
-    "test": "node --test test/session.test.js test/embeddings.test.js test/server-boundary.test.js",
+    "test": "node --test test/session.test.js test/embeddings.test.js test/server-boundary.test.js test/worker-security.test.js",
     "test:ui": "node --test test/ui.test.js"
   },
   "dependencies": {

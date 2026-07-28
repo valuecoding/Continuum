@@ -192,7 +192,15 @@ function createServer() {
 
       res.writeHead(404).end("Not found");
     } catch (err) {
-      sendJson(res, 500, { error: String(err.message || err) });
+      const requestId = crypto.randomUUID();
+      console.error(
+        `Continuum API failure [${requestId}]`,
+        err?.name || "Error"
+      );
+      sendJson(res, 500, {
+        error: "The demo request failed. Try again.",
+        requestId,
+      });
     }
   });
 }

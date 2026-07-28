@@ -7,6 +7,18 @@ import {
 } from "./memory/store.js";
 import { resumeMission, startMission } from "./agent/runtime.js";
 
+const API_PATHS = new Set([
+  "/api/crash",
+  "/api/full",
+  "/api/resume",
+  "/api/status",
+]);
+const MUTATING_API_PATHS = new Set([
+  "/api/crash",
+  "/api/full",
+  "/api/resume",
+]);
+
 async function buildSnapshot(sessionOverride = null) {
   const session = sessionOverride;
   if (!session) {
@@ -49,14 +61,70 @@ async function buildSnapshot(sessionOverride = null) {
   };
 }
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
+      ...extraHeaders,
     },
   });
+}
+
+export function isExplicitCrossSiteRequest(request) {
+  const requestUrl = new URL(request.url);
+  const origin = request.headers.get("Origin");
+  const fetchSite = request.headers.get("Sec-Fetch-Site");
+  return (
+    (origin && origin !== requestUrl.origin) ||
+    fetchSite === "cross-site"
+  );
+}
+
+export async function enforceApiRateLimit(request, env, pathname) {
+  const mutation = MUTATING_API_PATHS.has(pathname);
+  const limiter = mutation
+    ? env.DEMO_MUTATION_LIMITER
+    : env.DEMO_READ_LIMITER;
+  if (!limiter?.limit) return null;
+
+  const clientIp = request.headers.get("CF-Connecting-IP") || "unknown";
+  const scope = mutation ? "mutation" : "read";
+
+  try {
+    const { success } = await limiter.limit({
+      key: `${scope}:${clientIp}`,
+    });
+    if (success) return null;
+    return json(
+      { error: "Too many demo requests. Try again in a minute." },
+      429,
+      { "Retry-After": "60" }
+    );
+  } catch (error) {
+    console.error("Continuum rate limiter unavailable", error?.name || "Error");
+    return json(
+      { error: "The demo is temporarily unavailable. Try again shortly." },
+      503,
+      { "Retry-After": "10" }
+    );
+  }
+}
+
+function internalApiError(error, pathname) {
+  const requestId = crypto.randomUUID();
+  console.error(
+    `Continuum API failure [${requestId}] ${pathname}`,
+    error?.name || "Error"
+  );
+  return json(
+    {
+      error: "The demo request failed. Try again.",
+      requestId,
+    },
+    500
+  );
 }
 
 function applyEnv(env) {
@@ -76,11 +144,16 @@ function applyEnv(env) {
 }
 
 async function handleApi(request, env) {
-  applyEnv(env);
   const { pathname } = new URL(request.url);
 
   if (request.method !== "POST") {
     return json({ error: "Method not allowed" }, 405);
+  }
+  if (!API_PATHS.has(pathname)) {
+    return json({ error: "Not found" }, 404);
+  }
+  if (isExplicitCrossSiteRequest(request)) {
+    return json({ error: "Cross-site API requests are not allowed" }, 403);
   }
 
   const rawSessionId = request.headers.get("X-Continuum-Session");
@@ -89,6 +162,10 @@ async function handleApi(request, env) {
     return json({ error: "Invalid Continuum session id" }, 400);
   }
 
+  const rateLimited = await enforceApiRateLimit(request, env, pathname);
+  if (rateLimited) return rateLimited;
+
+  applyEnv(env);
   return withRequestClient(async () => {
     try {
       if (pathname === "/api/full") {
@@ -162,9 +239,8 @@ async function handleApi(request, env) {
         });
       }
 
-      return json({ error: "Not found" }, 404);
     } catch (err) {
-      return json({ error: String(err.message || err) }, 500);
+      return internalApiError(err, pathname);
     }
   });
 }
@@ -180,6 +256,8 @@ function withSecurityHeaders(response, request) {
   }
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Resource-Policy", "same-origin");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set(
     "Permissions-Policy",

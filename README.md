@@ -174,7 +174,16 @@ npx wrangler deploy
 Configuration lives in `wrangler.toml`. Secrets such as
 `AWS_BEARER_TOKEN_BEDROCK` are set through Wrangler and are never committed.
 The Worker adds HSTS, CSP, anti-framing, MIME-sniffing, referrer, and permissions
-security headers.
+security headers. Public write actions are limited per Cloudflare client,
+status reads use a separate higher limit, explicit cross-site API requests are
+rejected, and internal DB/AWS errors are replaced with a generic public error
+plus a request ID. The `workers.dev` route and version preview URLs are disabled;
+production is served only from the custom domain.
+
+The account, Hyperdrive, and rate-limit namespace IDs in `wrangler.toml` are
+resource identifiers, not credentials. They cannot authorize API or database
+access. Actual CockroachDB and Bedrock credentials remain in ignored local
+files or Cloudflare secret bindings.
 
 ## Project layout
 

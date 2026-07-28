@@ -25,7 +25,7 @@ function sslOptions() {
       ca: fs.readFileSync(certPath).toString(),
     };
   }
-  return { rejectUnauthorized: false };
+  return { rejectUnauthorized: true };
 }
 
 function buildConfig() {
