@@ -15,7 +15,7 @@ can recover the same mission without a human re-brief.
 | | |
 | --- | --- |
 | **Live demo** | [continuum.vortex-digital.de](https://continuum.vortex-digital.de) |
-| **Video** | [youtu.be/7wO_qs9avaI](https://youtu.be/7wO_qs9avaI) |
+| **Video** | [youtu.be/x54XnWFmqno](https://youtu.be/x54XnWFmqno) |
 | **Repository** | [github.com/valuecoding/Continuum](https://github.com/valuecoding/Continuum) |
 
 ![Continuum landing](docs/images/landing.png)

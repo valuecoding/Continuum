@@ -10,7 +10,7 @@ field has a character limit.
 - **Tagline:** The runtime stops. The mission continues.
 - **Live app:** https://continuum.vortex-digital.de/
 - **Source:** https://github.com/valuecoding/Continuum
-- **Video:** replace with the new public YouTube or Vimeo URL
+- **Video:** https://youtu.be/x54XnWFmqno
 
 ## Short description
 
